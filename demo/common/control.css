@@ -1,8 +1,8 @@
 .table-header .table-row>*,.table-body .table-row>*{
     display: inline-block;
     width: 10rem;
-    padding: 0.2rem 0.5rem;
-    border-right: 1px solid #f3f3f3;
+    padding: 0.5rem;
+    border-right: 1px solid #e3e3e3;
 }
 
 .table-header{
@@ -12,4 +12,16 @@
 }
 .table-body .table-row{
     border: 1px solid #d3d3d3;
+}
+.table-body .table-row>*{
+    background: #f3f3f3;
+}
+.table-body .table-row:nth-child(2n),.table-body .table-row:nth-child(2n)>*{
+    background: #d3d3d3;
+}
+.table-body .table-row:hover{
+    opacity: 0.8;
+}
+.table-body .table-row>*:hover{
+    background: #99f399;
 }
