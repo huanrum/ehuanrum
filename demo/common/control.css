@@ -1,0 +1,15 @@
+.table-header .table-row>*,.table-body .table-row>*{
+    display: inline-block;
+    width: 10rem;
+    padding: 0.2rem 0.5rem;
+    border-right: 1px solid #f3f3f3;
+}
+
+.table-header{
+    font-size: 1.2rem;
+    color:#ffffff;
+    background: #666699;
+}
+.table-body .table-row{
+    border: 1px solid #d3d3d3;
+}
