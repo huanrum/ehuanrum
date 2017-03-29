@@ -20,4 +20,31 @@
         }
     });
 
+    $e('common.dialog',function(binding){
+        return function(child,data){
+            data.buttons = data.buttons || [];
+            data.$close = function(){
+                dialog.parentNode.removeChild(dialog);
+            };
+            var dialog = binding([
+                ' <div class="common-dialog-back">',
+                '   <div class="common-dialog">',
+                '       <div class="common-dialog-header">',
+                '           <label>',
+                            data.title || 'no title',
+                '           </label>',
+                '           <a [onclick]="$close">&times;</a>',
+                '       </div>',
+                '       <div class="common-dialog-content">',
+                            child,
+                '       </div>',
+                '       <div class="common-dialog-footer">',
+                '           <a [btn:buttons] [onclick]="btn" [innerHTML]="btn.name"></a>',
+                '       </div>',
+                '   </div>',
+                ' </div>'
+                ].join(''),data).appendTo(document.body);
+        }
+    });
+
 })(window.$ehr);

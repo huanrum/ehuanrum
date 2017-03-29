@@ -1,3 +1,49 @@
+/*common*/
+.common-dialog-back{
+    position:fixed;
+	top:0;
+	left:0;
+	width:100%;
+	height:100%;
+	background:rgba(123,123,123,0.6);
+}
+.common-dialog-back .common-dialog{
+    position: absolute;
+	margin-left: 50%;
+	top: 50%;
+	transform:translate(-50%,-50%);
+	padding : 2px;
+	border-radius : 10px;
+    background:#f3f3f3;
+}
+.common-dialog-back .common-dialog .common-dialog-header{
+    height: 2em;
+    background: #666699;
+    padding: 0.5em;
+}
+.common-dialog-back .common-dialog .common-dialog-header a{
+    float: right;
+    cursor: pointer;
+}
+.common-dialog-back .common-dialog .common-dialog-content{
+     min-height: 6em;
+     min-width: 8em;
+}
+.common-dialog-back .common-dialog .common-dialog-footer{
+    border-top: 1px solid #d3d3d3;
+}
+
+
+/*my-login*/
+.my-login{
+    text-align: center;
+    border: 1px solid #e3e3e3;
+}
+.my-login>*{
+    padding: 1em
+}
+
+
 .table-header .table-row>*,.table-body .table-row>*{
     display: inline-block;
     width: 10rem;

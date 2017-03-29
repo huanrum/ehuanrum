@@ -18,7 +18,7 @@
     $e('control.my.login',function(binding){
         return function(element,data,field){
             binding([
-                '<div>',
+                '<div class="my-login">',
                 '   <div>',
                 '       <label>UserName</label>',
                 '       <input [value]="userName">',

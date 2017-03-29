@@ -17,6 +17,7 @@
                     name: name,
                     login:function(){
                         console.log(this.userName,this.password);
+                        $e('common.dialog')(this.userName+' - '+this.password,{title:'Login Message'});
                     }
                 });
         }
