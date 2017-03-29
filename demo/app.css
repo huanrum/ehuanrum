@@ -1,32 +1,3 @@
-body{
-    margin: 0;
-    padding: 0;
-}
-.ehuanrum-menu{
-    position: fixed;
-    height: 100%;
-    width: 16em;
-    float: left;
-    background: #363636;
-    color:#ffffff;
-}
-
-.ehuanrum-menu div{
-    margin: 10px;
-}
-.ehuanrum-menu div span{
-    background: #ff6689;
-    padding: 5px;
-}
-.ehuanrum-menu div span:hover{
-    cursor: pointer;
-    background: #996689;
-}
-
-.ehuanrum-content{
-    width: calc(100% - 16em);
-    float: right;
-}
 
 .ehuanrum-content .content-header{
     height:2em;
