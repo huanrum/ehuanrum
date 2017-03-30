@@ -144,12 +144,12 @@
         }
     }
 
-    function getOwnPropertyDescriptor(obj,field){
-        if('columns' in obj){
-            while(obj){
-                if(Object.getOwnPropertyDescriptor(obj,field)){
-                    return Object.getOwnPropertyDescriptor(obj,field);
-                }else{
+    function getOwnPropertyDescriptor(obj, field) {
+        if (field in obj) {
+            while (obj) {
+                if (Object.getOwnPropertyDescriptor(obj, field)) {
+                    return Object.getOwnPropertyDescriptor(obj, field);
+                } else {
                     obj = obj.__proto__;
                 }
             }
@@ -368,7 +368,7 @@
         if (!element.parentNode) { return; }
         if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
             if (/\S+:\S+/.test(field)) {
-                var fields = field.split(':'), elements = [], nextSibling = element.nextSibling,descriptor = getOwnPropertyDescriptor(data, fields[1]) || {};
+                var fields = field.split(':'), elements = [], nextSibling = element.nextSibling, descriptor = getOwnPropertyDescriptor(data, fields[1]) || {};
                 element.parentNode.removeChild(element);
                 Object.defineProperty(data, fields[1], {
                     configurable: true,
@@ -377,9 +377,9 @@
                         return descriptor.get && descriptor.get() || descriptor.value;
                     },
                     set: function (val) {
-                        if(descriptor.set){
+                        if (descriptor.set) {
                             descriptor.set(val);
-                        }else{
+                        } else {
                             descriptor.value = val;
                         }
                         render(val);
@@ -426,14 +426,19 @@
                     });
 
                 }
-                
+
             } else if (/^\s*on/.test(field)) {
-                element.addEventListener(field.replace('on','').trim(), function () {
-                    $value(data, value).apply(data, arguments);
-                });
-            } else if(typeof $value(data, value) === 'function'){
+                if (element.nodeName === 'IFRAME') {
+                    $value(element, field, $value(data, value));
+                    $value(element, field).call(data,element,field);
+                } else {
+                    element.addEventListener(field.replace('on', '').trim(), function () {
+                        $value(data, value).apply(data, arguments);
+                    });
+                }
+            } else if (typeof $value(data, value) === 'function') {
                 $value(element, field, $value(data, value));
-            }else{
+            } else {
                 var descriptor = getOwnPropertyDescriptor(data, value) || {};
                 data.$eval.push({
                     eval: value, fn: function () {
