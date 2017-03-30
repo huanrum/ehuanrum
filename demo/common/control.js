@@ -27,7 +27,7 @@
                 '       <label>Password</label>',
                 '       <input [value]="password">',
                 '   </div>',
-                '<div><button [onclick]="'+field+'">Login</button></div>',
+                '<div><button [clicked]="'+field+'">Login</button></div>',
                 '</div>',
                 ].join(''),data).appendTo(element);
         }
@@ -35,14 +35,35 @@
 
     $e('control.my.grid',function(binding,value){
         return function(element,data,field){
-            var columns = [];
-            value(data,field).forEach(function(it){
-                Object.keys(it).forEach(function(k){
-                    if(columns.indexOf(k) === -1){
-                        columns.push(k);
+            var newData = {};
+             Object.defineProperties(newData,{
+                items:{
+                    configurable: true,
+                    enumerable: true,
+                    set:function(val){
+                        value(data,field,val);
+                    },
+                    get:function(){
+                        return value(data,field);
                     }
-                });
+                },
+                columns:{
+                    configurable: true,
+                    enumerable: false,
+                    get:function(){
+                        var columns = [];
+                        value(data,field).forEach(function(it){
+                            Object.keys(it).forEach(function(k){
+                                if(columns.indexOf(k) === -1){
+                                    columns.push(k);
+                                }
+                            });
+                        });
+                        return columns;
+                    }
+                }
             });
+            
             binding([
                 '<div >',
                 '   <div class="table-header">',
@@ -56,10 +77,7 @@
                 '       </div>',
                 '   </div>',
                 '</div>'
-            ].join(''),{
-                columns:columns,
-                items:value(data,field)
-            }).appendTo(element);
+            ].join(''),newData).appendTo(element);
         }
     });
 

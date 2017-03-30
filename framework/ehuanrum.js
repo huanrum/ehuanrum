@@ -33,7 +33,7 @@
                     go.apply(this, arguments);
                 } else if (typeof menu === 'function') {
                     menu.apply(this, Array.prototype.slice.call(arguments, 1)).appendTo();
-                } else {
+                } else if (menu.appendTo) {
                     menu.appendTo();
                 }
             }
@@ -144,6 +144,19 @@
         }
     }
 
+    function getOwnPropertyDescriptor(obj,field){
+        if('columns' in obj){
+            while(obj){
+                if(Object.getOwnPropertyDescriptor(obj,field)){
+                    return Object.getOwnPropertyDescriptor(obj,field);
+                }else{
+                    obj = obj.__proto__;
+                }
+            }
+        }
+        return {};
+    }
+
     //给对象设值或取值，field可以是复杂的路径:a.b.0.a
     function $value($obj, $field, $value) {
         if (!/^[0-9a-zA-Z\._$@]*$/.test($field)) {
@@ -245,10 +258,10 @@
 
                 if (data === window) { return; }//不给window添加set/get
                 Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof EventTarget); }).forEach(function (pro) {
-                    var oldVal = data[pro], descriptor = Object.getOwnPropertyDescriptor(data, pro) || {};
+                    var oldVal = data[pro], descriptor = getOwnPropertyDescriptor(data, pro) || {};
                     Object.defineProperty(data, pro, {
                         configurable: true,
-                        enumerable: true,
+                        enumerable: descriptor.enumerable,
                         set: function (val) {
                             oldVal = val;
                             if (descriptor.set) {
@@ -354,20 +367,27 @@
     function defineProperty(element, data, field, value) {
         if (!element.parentNode) { return; }
         if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
-            if (/:/.test(field)) {
-                var fields = field.split(':'), tempValue = $value(data, fields[1]), elements = [], nextSibling = element.nextSibling;
+            if (/\S+:\S+/.test(field)) {
+                var fields = field.split(':'), elements = [], nextSibling = element.nextSibling,descriptor = getOwnPropertyDescriptor(data, fields[1]) || {};
                 element.parentNode.removeChild(element);
                 Object.defineProperty(data, fields[1], {
                     configurable: true,
-                    enumerable: true,
+                    enumerable: descriptor.enumerable,
                     get: function () {
-                        return tempValue;
+                        return descriptor.get && descriptor.get() || descriptor.value;
                     },
                     set: function (val) {
-                        tempValue = val;
-                        render(tempValue);
+                        if(descriptor.set){
+                            descriptor.set(val);
+                        }else{
+                            descriptor.value = val;
+                        }
+                        render(val);
                     }
                 });
+
+                render($value(data, fields[1]));
+
                 function render(vals) {
                     elements.forEach(function (it) {
                         if (!vals.some(function (i) { return it.t === i; })) {
@@ -379,6 +399,7 @@
                         if (!bindElement) {
                             var da = { $index: i };
                             Object.defineProperty(da, '$index', {
+                                enumerable: false,
                                 get: function () {
                                     return $value(data, fields[1]).map(function (x) { return '' + x; }).indexOf('' + item);
                                 }
@@ -387,10 +408,10 @@
                                 configurable: true,
                                 enumerable: true,
                                 get: function () {
-                                    return tempValue[i];
+                                    return vals[i];
                                 },
                                 set: function (val) {
-                                    tempValue[i] = val;
+                                    vals[i] = val;
                                 }
                             });
                             setTimeout(function () {
@@ -405,13 +426,15 @@
                     });
 
                 }
-                render(tempValue);
-            } else if (typeof $value(data, value) === 'function') {
-                $value(element, field, function () {
+                
+            } else if (/^\s*on/.test(field)) {
+                element.addEventListener(field.replace('on','').trim(), function () {
                     $value(data, value).apply(data, arguments);
                 });
-            } else {
-                var descriptor = Object.getOwnPropertyDescriptor(data, value) || {};
+            } else if(typeof $value(data, value) === 'function'){
+                $value(element, field, $value(data, value));
+            }else{
+                var descriptor = getOwnPropertyDescriptor(data, value) || {};
                 data.$eval.push({
                     eval: value, fn: function () {
                         $value(element, field, $value(data, value));
@@ -420,7 +443,7 @@
 
                 Object.defineProperty(data, value, {
                     configurable: true,
-                    enumerable: true,
+                    enumerable: descriptor.enumerable,
                     set: function (val) {
                         $value(element, field, val);
                         if (descriptor.set) {
@@ -432,13 +455,13 @@
                     }
                 });
                 if (field === 'value') {
-                    element.onkeyup = function () {
+                    element.addEventListener('onkeyup', function () {
                         $value(data, value, $value(element, field));
-                    };
+                    });
                 }
-                element.onclick = function () {
+                element.addEventListener('click', function () {
                     $value(data, value, $value(element, field));
-                };
+                });
             }
 
         } else {
@@ -455,23 +478,39 @@
         var element = document.createElement('ul');
         Object.keys(menus).forEach(function (m) {
             var menuElement = document.createElement('div');
+            var menuSpan = createElement(m, menus[m], (hash || '') + '/' + m);
             element.appendChild(menuElement);
-            menuElement.appendChild(createElement(m, menus[m], (hash || '') + '/' + m));
+            menuElement.appendChild(menuSpan);
             if (Object.keys(menus).length) {
-                menuElement.appendChild(createMenu(menus[m], router, go, (hash || '') + '/' + m));
+                var childMenu = createMenu(menus[m], router, go, (hash || '') + '/' + m);
+                menuElement.appendChild(childMenu);
+                menuSpan.addEventListener('click', menuAction(childMenu));
             }
         });
         return element;
 
+        function menuAction(childMenu) {
+            if (ehuanrum('menuAction')) {
+                return function () {
+                    ehuanrum('menuAction')(m, menuSpan, childMenu);
+                }
+            } else {
+                childMenu.style.display = 'none';
+                return function () {
+                    childMenu.style.display = childMenu.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+        }
+
         function createElement(name, menu, fullHash) {
             var parent = document.createElement('span');
             parent.innerHTML = name;
-            parent.onclick = function () {
+            parent.addEventListener('click', function () {
                 if (location.hash !== '#' + fullHash) {
                     location.hash = '#' + fullHash;
                     go(fullHash, name);
                 }
-            };
+            });
             router[fullHash] = menu;
             return parent;
         }
@@ -480,7 +519,7 @@
 
 })(function (_obj, _str, _valuer) {
 
-    while(_obj){
+    while (_obj) {
         _str = replace(_obj, _str);
         _obj = _obj.__proto__;
     }
