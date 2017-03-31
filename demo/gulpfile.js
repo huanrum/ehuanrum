@@ -6,7 +6,7 @@ var gulp = require('gulp'),
     replace = require('gulp-replace'),
     del = require('del');
 
-var isDebug = false;//由于ehuanrum暂时不可以压缩，所以请不要设为false
+var isDebug = true;//isDebug=false时候是使用压缩文件的
 
 //压缩 framework css
 gulp.task('framework_minify_css', function () {
@@ -77,7 +77,7 @@ gulp.task('demo_minify_js', function() {
 
 //复制新的html
 gulp.task('copy_html',function() {
-    var version = Date.now();//有数据时候为非debug
+    var version = Date.now();
     del('./../build/demo/index.html');
     return gulp.src('./index.template',{ base: '.' })
         .pipe(rename("index.html"))
