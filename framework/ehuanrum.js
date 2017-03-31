@@ -90,6 +90,14 @@
             chaceData.temp[field] = value;
 
         } else {
+            if(!Object.getOwnPropertyNames(chaceData.data).length){
+                var temp = chaceData.temp;
+                chaceData.temp = {};
+                Object.keys(temp).sort(function (a, b) { return a.length - b.length; }).forEach(function(field){
+                    chaceData.temp[field] = temp[field];
+                });
+            }
+
             //如果第一个参数为假时返回整个缓存
             if (!field) {
                 return chaceData.data;
@@ -103,9 +111,17 @@
                     chaceTempData = chaceTempData[tempField] = chaceTempData[tempField] || {};
                 }
                 if (!chaceTempData[lastField] && value) {
-                    if (typeof value === 'function') {
-                        var str = value.toLocaleString().slice(value.toLocaleString().indexOf('(') + 1, value.toLocaleString().indexOf(')'));
-                        var parameters = str ? str.split(',') : [];
+                    if (typeof value === 'function'|| (value instanceof Array && typeof value[value.length-1] === 'function') ) {
+                        var parameters = [];
+                        if(typeof value === 'function'){
+                            var str = value.toLocaleString().slice(value.toLocaleString().indexOf('(') + 1, value.toLocaleString().indexOf(')'));
+                            parameters = str ? str.split(',') : [];
+                        }else{
+                            var fn = value.pop();
+                            parameters = value;
+                            value = fn;
+                        }
+                       
                         for (var i = 0; i < parameters.length; i++) {
                             if (parameters[i].trim().toLocaleLowerCase() === 'self') {
                                 parameters[i] = chaceData.data[field.split('.')[0]];
@@ -430,7 +446,7 @@
             } else if (/^\s*on/.test(field)) {
                 if (element.nodeName === 'IFRAME') {
                     $value(element, field, $value(data, value));
-                    $value(element, field).call(data,element,field);
+                    $value(element, field).call(data, element, field);
                 } else {
                     element.addEventListener(field.replace('on', '').trim(), function () {
                         $value(data, value).apply(data, arguments);
@@ -463,10 +479,11 @@
                     element.addEventListener('onkeyup', function () {
                         $value(data, value, $value(element, field));
                     });
+                } else {
+                    element.addEventListener('click', function () {
+                        $value(data, value, $value(element, field));
+                    });
                 }
-                element.addEventListener('click', function () {
-                    $value(data, value, $value(element, field));
-                });
             }
 
         } else {
@@ -489,19 +506,24 @@
             if (Object.keys(menus).length) {
                 var childMenu = createMenu(menus[m], router, go, (hash || '') + '/' + m);
                 menuElement.appendChild(childMenu);
-                menuSpan.addEventListener('click', menuAction(childMenu));
+                menuSpan.addEventListener('click', menuAction(menuSpan, childMenu, m));
             }
         });
         return element;
 
-        function menuAction(childMenu) {
+        function menuAction(menuSpan, childMenu, m) {
             if (ehuanrum('menuAction')) {
                 return function () {
                     ehuanrum('menuAction')(m, menuSpan, childMenu);
                 }
             } else {
-                childMenu.style.display = 'none';
+                childMenu.style.display = new RegExp('#'+(hash || '') + '/' + m).test(location.hash)? 'block' : 'none';
                 return function () {
+                    Array.prototype.forEach.call(this.parentNode.parentNode.children, function (menuEle) {
+                        Array.prototype.forEach.call(menuEle.getElementsByTagName('UL'), function (ul) {
+                            ul.style.display = 'none';
+                        });
+                    });
                     childMenu.style.display = childMenu.style.display === 'none' ? 'block' : 'none';
                 }
             }
@@ -523,19 +545,32 @@
 
 
 })(function (_obj, _str, _valuer) {
-
-    while (_obj) {
-        _str = replace(_obj, _str);
-        _obj = _obj.__proto__;
+    var _tempObj = _obj, types = { function: ['(', ').bind(obj)'], object: '()' };
+    var replaceFields = [];
+    while (_tempObj) {
+        replaceFields = replaceFields.concat(Object.getOwnPropertyNames(_tempObj));
+        _tempObj = _tempObj.__proto__;
     }
-    return eval(_str);
 
-    function replace(obj, str) {
-        var pros = Object.getOwnPropertyNames(obj).sort(function (a, b) { return b.length - a.length; });
-        for (var i = 0; i < pros.length; i++) {
-            var da = _valuer(obj, pros[i]), types = { function: ['(', ').bind(obj)'], object: '()' }[typeof da] || '  ';
-            str = str.replace(new RegExp(pros[i].replace('$', '\\$'), 'g'), types[0] + JSON.stringify(da) + types[1]);
+    replaceFields.sort(function (a, b) { return b.length - a.length; }).map(function (field, index) {
+        if (/^[0-9]*$/.test(field.trim())) { return; }
+        var back = _str.match(new RegExp('(\\.|\\[[\\\'"])\\s*' + field.replace('$', '\\$'), 'g'));
+        if (back) {
+            back.forEach(function (match, index) {
+                _str = _str.replace(match, '_' + index + '_');
+            });
         }
-        return str;
-    }
+        _str = _str.replace(new RegExp(field.replace('$', '\\$'), 'g'), '$' + index + '$');
+        if (back) {
+            back.forEach(function (match, index) {
+                _str = _str.replace('_' + index + '_', match);
+            });
+        }
+        return _valuer(_obj, field);
+    }).forEach(function (val, index) {
+        var type = types[typeof val] || '  '
+        _str = _str.replace(new RegExp('\\$' + index + '\\$', 'g'), type[0] + JSON.stringify(val) + type[1]);
+    });
+
+    return eval(_str);
 }));

@@ -5,7 +5,7 @@
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.page2.each', function (common_page) {
+    $e('router.game.pc', ['common_page',function (common_page) {
 
         return function (name) {
             return common_page([
@@ -19,7 +19,7 @@
                 '   <button [onclick]="add">Add Item</button>',
                 '</div>'
             ].join(''), {
-                    title: 'Page2.each',
+                    title: 'Game PC',
                     checked:true,
                     name: name,
                     items:[{name:'*1',value:1},{name:'-2',value:2},{name:'+3',value:3}],
@@ -33,7 +33,7 @@
                 });
         }
 
-    });
+    }]);
 
 
 })(window.$ehr);

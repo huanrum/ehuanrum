@@ -5,7 +5,7 @@
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.page2.login', function (common_page) {
+    $e('router.game.phone', ['common_page',function (common_page) {
 
         return function (name) {
             return common_page([
@@ -13,7 +13,7 @@
                 '   <div [my.login]="login"></div>',
                 '</div>'
             ].join(''), {
-                    title: 'Page2.login',
+                    title: 'Game Phone',
                     name: name,
                     login:function(){
                         console.log(this.userName,this.password);
@@ -22,6 +22,6 @@
                 });
         }
 
-    });
+    }]);
 
 })(window.$ehr);
