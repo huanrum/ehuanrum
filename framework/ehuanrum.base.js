@@ -17,7 +17,7 @@
         chaceData.content.className = 'ehuanrum-content';
         //界面加载完成后去主动给界面做数据绑定处理
         window.addEventListener('load', function () {
-            var routerUrl = {}, paths = location.hash.replace('#', '').split('/');;
+            var routerUrl = {}, paths = location.hash.replace('#', '').split('/');
             binding(document.body, window);
             document.body.appendChild(chaceData.menu);
             document.body.appendChild(chaceData.content);
@@ -39,6 +39,7 @@
     }
 
     //把下面的两个功能提供出去
+    ehuanrum('filter', function () { return filter; });
     ehuanrum('binding', function () { return binding; });
     ehuanrum('value', function () { return $value; });
 
@@ -158,6 +159,13 @@
         }
     }
 
+    function filter(str){
+        str = str.replace(/\$\S*\$/,'');
+        return str.split(/\s+/).map(function(c){
+            return c[0].toLocaleUpperCase() + c.slice(1);
+        }).join('');
+    }
+
     //完成菜单和路由的构建，它是不对外公开的,若外部定义了相关的menuAction操作就用外部的，否则就用默认的
     function __createMenu(menus, router, go, hash) {
         var element = document.createElement('ul');
@@ -195,7 +203,11 @@
 
         function createElement(name, menu, fullHash) {
             var parent = document.createElement('span');
-            parent.innerHTML = name;
+            parent.innerHTML = ehuanrum('filter')(name);
+            if(ehuanrum('filter.menu')){
+                parent.innerHTML = ehuanrum('filter.menu')(parent.innerHTML,name);
+            }
+            
             parent.addEventListener('click', function () {
                 if (location.hash !== '#' + fullHash) {
                     location.hash = '#' + fullHash;
@@ -382,7 +394,7 @@
             });
 
             if (!element.parentNode) { return; }
-            initChildren.apply(element,element.children);
+            initChildren.apply(element, element.children);
         }
 
         function initChildren() {
@@ -450,7 +462,21 @@
             } else {
                 data.$eval.push({
                     eval: value, fn: function () {
-                        $value(element, field, $value(data, value));
+                        var tempV = $value(data, value.replace(/\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g, ''));
+                        if (value.match(/\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g)) {
+                            value.match(/\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g).forEach(function (filter) {
+                                var filterFn = filter.split('(')[0].replace('|','').trim();
+                                if (filter.split(/[\(\)]/g)[1]) {
+                                    var filterArgs = filter.split(/[\(\)]/g)[1].split(',').map(function (arg) {
+                                        return $value(data, arg.trim());
+                                    });
+                                    tempV = ehuanrum('filter.' + filterFn).apply(ehuanrum('filter'), [tempV].concat(filterArgs));
+                                } else {
+                                    tempV = ehuanrum('filter.' + filterFn)(tempV);
+                                }
+                            });
+                        }
+                        $value(element, field, tempV);
                     }
                 });
             }

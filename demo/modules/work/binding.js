@@ -13,12 +13,13 @@
                '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index">',
                
                '    </div>',
-               '    <div>',
+               '    <div [innerHTML]="name|capitalize(index)">',
                
                '    </div>',
                '</div>'
             ].join(''),{
                     title:'Binding',
+                    name:name,
                     index:0,
                     color:function(){
                         return functions.color(this.index);

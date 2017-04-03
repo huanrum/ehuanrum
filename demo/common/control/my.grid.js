@@ -33,8 +33,8 @@
                     }
                 }
             });
-            newData.show = function(){
-                common_dialog(JSON.stringify(this.item),{});
+            newData.show = function(item){
+                common_dialog(JSON.stringify(item),{});
             };
             binding([
                 '<div >',
@@ -44,8 +44,8 @@
                 '       </div>',
                 '   </div>',
                 '   <div class="table-body">',
-                '       <div [item:items] class="table-row" [ondblclick]="show" [onclick]="select">',
-                '           <div [column:columns] [innerHTML]="item[column]" [class]="\'cell-\' + $index"></div>',
+                '       <div [item:items] class="table-row" [ondblclick]="show(item)" [onclick]="select">',
+                '           <div [column:columns] [class]="\'cell-\' + $index" [innerHTML]="item[column]"></div>',
                 '       </div>',
                 '   </div>',
                 '</div>'
