@@ -5,7 +5,7 @@
 
     $e('control.ehr.input',function(){
         return function(element,data,field){
-            $e('binding')('<input [value]="'+field+'">',data).appendTo(element);
+            $e('binding')('<input [value]="'+field+'">',data,element);
         }
     });
 

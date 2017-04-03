@@ -17,7 +17,7 @@
                 '   </div>',
                 '<div><button [onclick]="'+field+'">Login</button></div>',
                 '</div>',
-                ].join(''),data).appendTo(element);
+                ].join(''),data,element);
         }
     });
 

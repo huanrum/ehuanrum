@@ -49,7 +49,7 @@
                 '       </div>',
                 '   </div>',
                 '</div>'
-            ].join(''),newData).appendTo(element);
+            ].join(''),newData,element);
         }
     }]);
 

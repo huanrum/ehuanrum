@@ -26,7 +26,7 @@
                 '       </div>',
                 '   </div>',
                 ' </div>'
-                ].join(''),data).appendTo(document.body);
+                ].join(''),data,document.body);
         }
     });
 

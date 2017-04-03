@@ -5,7 +5,7 @@
 
     $e('control.ehr.checkbox',function(){
         return function(element,data,field){
-            $e('binding')('<input type="checkbox" [checked]="'+field+'">',data).appendTo(element);
+            $e('binding')('<input type="checkbox" [checked]="'+field+'">',data,element);
         }
     });
 

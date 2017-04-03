@@ -24,11 +24,13 @@
                     color:function(){
                         return functions.color(this.index);
                     }
+            },function(data){
+                setInterval(function(){
+                    data.index = Math.floor(Math.random() * 100);
+                },1000);
             });
 
-            setInterval(function(){
-                binding.data().index = Math.floor(Math.random() * 100);
-            },1000);
+            
 
             return binding;
         }
