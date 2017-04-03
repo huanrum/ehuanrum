@@ -30,9 +30,8 @@
                     arguments[0] = routerUrl[menu];
                     go.apply(this, arguments);
                 } else if (typeof menu === 'function') {
-                    menu.apply(this, Array.prototype.slice.call(arguments, 1)).appendTo();
-                } else if (menu.appendTo) {
-                    menu.appendTo();
+                    chaceData.content.innerHTML = '';
+                    menu.apply(this, Array.prototype.slice.call(arguments, 1));
                 }
             }
         });
@@ -317,10 +316,10 @@
     };
 
     //用作双向绑定的功能部分
-    function binding(element, data, reserve) {
+    function binding(element, data, parentNode) {
         if (typeof element === 'string') {
             element = createElement(element);
-            chaceData.content.appendChild(element);
+            (parentNode || chaceData.content).appendChild(element);
         }
         if (!element instanceof HTMLElement) {
             throw new Error('element必须是DOM元素。');
@@ -332,25 +331,17 @@
 
         extendElement(element, data);
 
-        return {
-            get: function () { return element; },
-            data: function () { return data; },
-            appendTo: function (parent) {
-                if (parent) {
-                    parent.appendChild(element);
-                } else {
-                    chaceData.content.innerHTML = '';
-                    chaceData.content.appendChild(element);
-                }
-                return element;
-            }
-        };
+        return element;
 
         function initBindingDefineProperty() {
             if (!data.$eval || (data.$eval === data.__proto__.$eval)) {
 
                 Object.defineProperty(data, '$id', { value: ++chaceData.binding$id });
                 Object.defineProperty(data, '$eval', { value: [] });
+                Object.defineProperty(data, '$real', { value: function(){return JSON.parse(JSON.stringify(data) || 'null');}});
+                element.apply = function () {
+                data.$eval.forEach(function (ev) { ev.fn() });
+            };
 
                 if (data === window) { return; }//不给window添加set/get
                 Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof EventTarget); }).forEach(function (pro) {
@@ -388,7 +379,7 @@
                     defineProperty(element, data, $name(attr.name.slice(1, -1)), attr.value);
                 }
 
-                if (!reserve && !chaceData.binding) {
+                if (!chaceData.binding) {
                     element.removeAttribute(attr.name);
                 }
             });
@@ -404,20 +395,16 @@
                     //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
                 } else if (child.scope() !== data && data !== window) {
                     child.scope().__proto__ = data;
+                    //data.$eval.push({});
                 }
             });
         }
 
         function extendElement(element, data) {
-            element.apply = function () {
-                data.$eval.forEach(function (ev) { ev.fn() });
-            };
             element.scope = function () {
                 return data;
             };
-            element.data = function () {
-                return JSON.parse(JSON.stringify(data) || 'null');
-            };
+           
         }
 
         function $name(name) {
@@ -521,7 +508,7 @@
                 }
             });
             if (field === 'value') {
-                element.addEventListener('onkeyup', function () {
+                element.addEventListener('keyup', function () {
                     $value(data, value, $value(element, field));
                 });
             } else {
@@ -579,7 +566,7 @@
                             }
                         });
                         da.__proto__ = data;
-                        bindElement = binding(element.outerHTML.replace('[' + field + ']=""', ''), da).get();
+                        bindElement = binding(element.outerHTML.replace('[' + field + ']=""', ''), da);
                     } else {
                         bindElement.apply();
                     }
