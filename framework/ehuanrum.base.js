@@ -17,15 +17,13 @@
         chaceData.content.className = 'ehuanrum-content';
         //界面加载完成后去主动给界面做数据绑定处理
         window.addEventListener('load', function () {
-            var routerUrl = {};
+            var routerUrl = {}, paths = location.hash.replace('#', '').split('/');;
             binding(document.body, window);
             document.body.appendChild(chaceData.menu);
             document.body.appendChild(chaceData.content);
-            chaceData.menu.appendChild(createMenu(ehuanrum('router'), routerUrl, go, ''));
-            setTimeout(function () {
-                var paths = location.hash.replace('#', '').split('/');
-                go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
-            });
+            chaceData.menu.appendChild(__createMenu(ehuanrum('router'), routerUrl, go, ''));
+
+            go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
 
             function go(menu) {
                 if (typeof menu === 'string') {
@@ -48,7 +46,7 @@
         return ehuanrum;
     };
 
-    //用来做依赖相关的处理，当前版本的代码不可以混淆压缩
+    //用来做依赖相关的处理，这是这个框架的入口
     function ehuanrum(field, value) {
         field = field || '';
         if (typeof field !== 'string') {
@@ -90,10 +88,10 @@
             chaceData.temp[field] = value;
 
         } else {
-            if(!Object.getOwnPropertyNames(chaceData.data).length){
+            if (!Object.getOwnPropertyNames(chaceData.data).length) {
                 var temp = chaceData.temp;
                 chaceData.temp = {};
-                Object.keys(temp).sort(function (a, b) { return a.length - b.length; }).forEach(function(field){
+                Object.keys(temp).sort(function (a, b) { return a.length - b.length; }).forEach(function (field) {
                     chaceData.temp[field] = temp[field];
                 });
             }
@@ -111,17 +109,17 @@
                     chaceTempData = chaceTempData[tempField] = chaceTempData[tempField] || {};
                 }
                 if (!chaceTempData[lastField] && value) {
-                    if (typeof value === 'function'|| (value instanceof Array && typeof value[value.length-1] === 'function') ) {
+                    if (typeof value === 'function' || (value instanceof Array && typeof value[value.length - 1] === 'function')) {
                         var parameters = [];
-                        if(typeof value === 'function'){
+                        if (typeof value === 'function') {
                             var str = value.toLocaleString().slice(value.toLocaleString().indexOf('(') + 1, value.toLocaleString().indexOf(')'));
                             parameters = str ? str.split(',') : [];
-                        }else{
+                        } else {
                             var fn = value.pop();
                             parameters = value;
                             value = fn;
                         }
-                       
+
                         for (var i = 0; i < parameters.length; i++) {
                             if (parameters[i].trim().toLocaleLowerCase() === 'self') {
                                 parameters[i] = chaceData.data[field.split('.')[0]];
@@ -160,7 +158,56 @@
         }
     }
 
-    function getOwnPropertyDescriptor(obj, field) {
+    //完成菜单和路由的构建，它是不对外公开的,若外部定义了相关的menuAction操作就用外部的，否则就用默认的
+    function __createMenu(menus, router, go, hash) {
+        var element = document.createElement('ul');
+        Object.keys(menus).forEach(function (m) {
+            var menuElement = document.createElement('div');
+            var menuSpan = createElement(m, menus[m], (hash || '') + '/' + m);
+            element.appendChild(menuElement);
+            menuElement.appendChild(menuSpan);
+            if (Object.keys(menus).length) {
+                var childMenu = __createMenu(menus[m], router, go, (hash || '') + '/' + m);
+                menuElement.appendChild(childMenu);
+                menuSpan.addEventListener('click', menuAction(menuSpan, childMenu, m));
+            }
+        });
+        return element;
+
+
+        function menuAction(menuSpan, childMenu, m) {
+            if (ehuanrum('menuAction')) {
+                return function () {
+                    ehuanrum('menuAction')(m, menuSpan, childMenu);
+                }
+            } else {
+                childMenu.style.display = new RegExp('#' + (hash || '') + '/' + m).test(location.hash) ? 'block' : 'none';
+                return function () {
+                    Array.prototype.forEach.call(this.parentNode.parentNode.children, function (menuEle) {
+                        Array.prototype.forEach.call(menuEle.getElementsByTagName('UL'), function (ul) {
+                            ul.style.display = 'none';
+                        });
+                    });
+                    childMenu.style.display = childMenu.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+        }
+
+        function createElement(name, menu, fullHash) {
+            var parent = document.createElement('span');
+            parent.innerHTML = name;
+            parent.addEventListener('click', function () {
+                if (location.hash !== '#' + fullHash) {
+                    location.hash = '#' + fullHash;
+                    go(fullHash, name);
+                }
+            });
+            router[fullHash] = menu;
+            return parent;
+        }
+    }
+
+    function __getOwnPropertyDescriptor(obj, field) {
         if (field in obj) {
             while (obj) {
                 if (Object.getOwnPropertyDescriptor(obj, field)) {
@@ -261,12 +308,33 @@
     function binding(element, data, reserve) {
         if (typeof element === 'string') {
             element = createElement(element);
+            chaceData.content.appendChild(element);
         }
         if (!element instanceof HTMLElement) {
             throw new Error('element必须是DOM元素。');
         }
 
-        setTimeout(function () {
+        initBindingDefineProperty();
+        initBindingElement();
+        data.$eval.forEach(function (ev) { ev.fn() });
+
+        extendElement(element, data);
+
+        return {
+            get: function () { return element; },
+            data: function () { return data; },
+            appendTo: function (parent) {
+                if (parent) {
+                    parent.appendChild(element);
+                } else {
+                    chaceData.content.innerHTML = '';
+                    chaceData.content.appendChild(element);
+                }
+                return element;
+            }
+        };
+
+        function initBindingDefineProperty() {
             if (!data.$eval || (data.$eval === data.__proto__.$eval)) {
 
                 Object.defineProperty(data, '$id', { value: ++chaceData.binding$id });
@@ -274,7 +342,7 @@
 
                 if (data === window) { return; }//不给window添加set/get
                 Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof EventTarget); }).forEach(function (pro) {
-                    var oldVal = data[pro], descriptor = getOwnPropertyDescriptor(data, pro) || {};
+                    var oldVal = data[pro], descriptor = __getOwnPropertyDescriptor(data, pro) || {};
                     Object.defineProperty(data, pro, {
                         configurable: true,
                         enumerable: descriptor.enumerable,
@@ -292,9 +360,9 @@
                     });
                 });
             }
+        }
 
-
-
+        function initBindingElement() {
             //把[]关起来的属性设置双向绑定
             var controls = ehuanrum('control');
             Array.prototype.filter.call(element.attributes || [], function (attr) {
@@ -312,43 +380,25 @@
                     element.removeAttribute(attr.name);
                 }
             });
-            setTimeout(function () {
-                data.$eval.forEach(function (ev) { ev.fn() });
-            });
-            setTimeout(function () {
-                if (!element.parentNode) { return; }
-                Array.prototype.forEach.call(element.children, function (child) {
-                    if (!child.scope) {
-                        binding(child, data);
-                        //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
-                    } else if (child.scope() !== data && data !== window) {
-                        child.scope().__proto__ = data;
-                    }
-                });
-            }, 100);
 
-        }, 10);
+            if (!element.parentNode) { return; }
+            initChildren.apply(element,element.children);
+        }
 
-        extendElement(element, data);
-        return {
-            get: function () { return element; },
-            data: function () { return data; },
-            appendTo: function (parent) {
-                if (parent) {
-                    parent.appendChild(element);
-                } else {
-                    chaceData.content.innerHTML = '';
-                    chaceData.content.appendChild(element);
+        function initChildren() {
+            Array.prototype.forEach.call(arguments, function (child) {
+                if (!child.scope) {
+                    binding(child, data);
+                    //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
+                } else if (child.scope() !== data && data !== window) {
+                    child.scope().__proto__ = data;
                 }
-                return element;
-            }
-        };
+            });
+        }
 
         function extendElement(element, data) {
             element.apply = function () {
-                setTimeout(function () {
-                    data.$eval.forEach(function (ev) { ev.fn() });
-                }, 10);
+                data.$eval.forEach(function (ev) { ev.fn() });
             };
             element.scope = function () {
                 return data;
@@ -357,6 +407,7 @@
                 return JSON.parse(JSON.stringify(data) || 'null');
             };
         }
+
         function $name(name) {
             var replaces = {
                 class: 'className',
@@ -369,6 +420,7 @@
             });
             return name;
         }
+
         function createElement(string) {
             var parent = document.createElement('div');
             parent.innerHTML = string;
@@ -377,200 +429,146 @@
 
     };
 
-
-
-    ///defineProperty
+    ///defineProperty,实现双向绑定
     function defineProperty(element, data, field, value) {
         if (!element.parentNode) { return; }
-        if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
-            if (/\S+:\S+/.test(field)) {
-                var fields = field.split(':'), elements = [], nextSibling = element.nextSibling, descriptor = getOwnPropertyDescriptor(data, fields[1]) || {};
-                element.parentNode.removeChild(element);
-                Object.defineProperty(data, fields[1], {
-                    configurable: true,
-                    enumerable: descriptor.enumerable,
-                    get: function () {
-                        return descriptor.get && descriptor.get() || descriptor.value;
-                    },
-                    set: function (val) {
-                        if (descriptor.set) {
-                            descriptor.set(val);
-                        } else {
-                            descriptor.value = val;
-                        }
-                        render(val);
-                    }
-                });
-
-                render($value(data, fields[1]));
-
-                function render(vals) {
-                    elements.forEach(function (it) {
-                        if (!vals.some(function (i) { return it.t === i; })) {
-                            it.e.parentNode.removeChild(it.e);
-                        }
-                    });
-                    elements = Array.prototype.map.call(vals, function (item, i) {
-                        var bindElement = (elements.find(function (it) { return it.t === item; }) || {}).e;
-                        if (!bindElement) {
-                            var da = { $index: i };
-                            Object.defineProperty(da, '$index', {
-                                enumerable: false,
-                                get: function () {
-                                    return $value(data, fields[1]).map(function (x) { return '' + x; }).indexOf('' + item);
-                                }
-                            });
-                            Object.defineProperty(da, fields[0], {
-                                configurable: true,
-                                enumerable: true,
-                                get: function () {
-                                    return vals[i];
-                                },
-                                set: function (val) {
-                                    vals[i] = val;
-                                }
-                            });
-                            setTimeout(function () {
-                                da.__proto__ = data;
-                            }, 10);
-                            bindElement = binding(element.outerHTML.replace('[' + field + ']=""', ''), da).get();
-                        } else {
-                            bindElement.apply();
-                        }
-                        nextSibling.before(bindElement);
-                        return { t: item, e: bindElement };
-                    });
-
-                }
-
-            } else if (/^\s*on/.test(field)) {
-                if (element.nodeName === 'IFRAME') {
+        //关联的element属性名以on开头的都是事件
+        if (/^\s*on/.test(field)) {
+            events();
+            //以a:b这种结构的是循环此时的value是无意义的
+        } else if (/\S+:\S+/.test(field)) {
+            foreach(field.split(':'));
+            //其他的都是element的普通属性
+        } else {
+            //简单属性名
+            if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
+                if (typeof $value(data, value) === 'function') {
                     $value(element, field, $value(data, value));
-                    $value(element, field).call(data, element, field);
                 } else {
-                    element.addEventListener(field.replace('on', '').trim(), function () {
-                        $value(data, value).apply(data, arguments);
-                    });
+                    property();
                 }
-            } else if (typeof $value(data, value) === 'function') {
-                $value(element, field, $value(data, value));
             } else {
-                var descriptor = getOwnPropertyDescriptor(data, value) || {};
                 data.$eval.push({
                     eval: value, fn: function () {
                         $value(element, field, $value(data, value));
                     }
                 });
+            }
+        }
 
-                Object.defineProperty(data, value, {
-                    configurable: true,
-                    enumerable: descriptor.enumerable,
-                    set: function (val) {
-                        $value(element, field, val);
-                        if (descriptor.set) {
-                            descriptor.set(val);
-                        }
-                    },
-                    get: function () {
-                        return (field === 'value' && element.value) || (descriptor.get && descriptor.get());
+        //on开头的都被认为是事件
+        function events() {
+            if (element.nodeName === 'IFRAME') {
+                $value(element, field, $value(data, value));
+                $value(element, field).call(data, element, field);
+            } else {
+                element.addEventListener(field.replace('on', '').trim(), function () {
+                    if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
+                        $value(data, value).apply(data, arguments)
+                    } else {
+                        $value(data, value);
                     }
                 });
-                if (field === 'value') {
-                    element.addEventListener('onkeyup', function () {
-                        $value(data, value, $value(element, field));
-                    });
-                } else {
-                    element.addEventListener('click', function () {
-                        $value(data, value, $value(element, field));
-                    });
-                }
             }
+        }
 
-        } else {
+        function property() {
+
+            var descriptor = __getOwnPropertyDescriptor(data, value) || {};
             data.$eval.push({
                 eval: value, fn: function () {
                     $value(element, field, $value(data, value));
                 }
             });
+
+            Object.defineProperty(data, value, {
+                configurable: true,
+                enumerable: descriptor.enumerable,
+                set: function (val) {
+                    $value(element, field, val);
+                    if (descriptor.set) {
+                        descriptor.set(val);
+                    }
+                },
+                get: function () {
+                    return (field === 'value' && element.value) || (descriptor.get && descriptor.get());
+                }
+            });
+            if (field === 'value') {
+                element.addEventListener('onkeyup', function () {
+                    $value(data, value, $value(element, field));
+                });
+            } else {
+                element.addEventListener('click', function () {
+                    $value(data, value, $value(element, field));
+                });
+            }
         }
+
+        function foreach(fields) {
+            var elements = [], nextSibling = element.nextSibling, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
+            element.parentNode.removeChild(element);
+            Object.defineProperty(data, fields[1], {
+                configurable: true,
+                enumerable: descriptor.enumerable,
+                get: function () {
+                    return descriptor.get && descriptor.get() || descriptor.value;
+                },
+                set: function (val) {
+                    if (descriptor.set) {
+                        descriptor.set(val);
+                    } else {
+                        descriptor.value = val;
+                    }
+                    render(val);
+                }
+            });
+
+            render($value(data, fields[1]));
+
+            function render(vals) {
+                elements.forEach(function (it) {
+                    if (!vals.some(function (i) { return it.t === i; })) {
+                        it.e.parentNode.removeChild(it.e);
+                    }
+                });
+                elements = Array.prototype.map.call(vals, function (item, i) {
+                    var bindElement = (elements.find(function (it) { return it.t === item; }) || {}).e;
+                    if (!bindElement) {
+                        var da = { $index: i };
+                        Object.defineProperty(da, '$index', {
+                            enumerable: false,
+                            get: function () {
+                                return $value(data, fields[1]).map(function (x) { return '' + x; }).indexOf('' + item);
+                            }
+                        });
+                        Object.defineProperty(da, fields[0], {
+                            configurable: true,
+                            enumerable: true,
+                            get: function () {
+                                return vals[i];
+                            },
+                            set: function (val) {
+                                vals[i] = val;
+                            }
+                        });
+                        da.__proto__ = data;
+                        bindElement = binding(element.outerHTML.replace('[' + field + ']=""', ''), da).get();
+                    } else {
+                        bindElement.apply();
+                    }
+                    nextSibling.before(bindElement);
+                    return { t: item, e: bindElement };
+                });
+
+            }
+        }
+
     };
 
 
-    function createMenu(menus, router, go, hash) {
-        var element = document.createElement('ul');
-        Object.keys(menus).forEach(function (m) {
-            var menuElement = document.createElement('div');
-            var menuSpan = createElement(m, menus[m], (hash || '') + '/' + m);
-            element.appendChild(menuElement);
-            menuElement.appendChild(menuSpan);
-            if (Object.keys(menus).length) {
-                var childMenu = createMenu(menus[m], router, go, (hash || '') + '/' + m);
-                menuElement.appendChild(childMenu);
-                menuSpan.addEventListener('click', menuAction(menuSpan, childMenu, m));
-            }
-        });
-        return element;
-
-        function menuAction(menuSpan, childMenu, m) {
-            if (ehuanrum('menuAction')) {
-                return function () {
-                    ehuanrum('menuAction')(m, menuSpan, childMenu);
-                }
-            } else {
-                childMenu.style.display = new RegExp('#'+(hash || '') + '/' + m).test(location.hash)? 'block' : 'none';
-                return function () {
-                    Array.prototype.forEach.call(this.parentNode.parentNode.children, function (menuEle) {
-                        Array.prototype.forEach.call(menuEle.getElementsByTagName('UL'), function (ul) {
-                            ul.style.display = 'none';
-                        });
-                    });
-                    childMenu.style.display = childMenu.style.display === 'none' ? 'block' : 'none';
-                }
-            }
-        }
-
-        function createElement(name, menu, fullHash) {
-            var parent = document.createElement('span');
-            parent.innerHTML = name;
-            parent.addEventListener('click', function () {
-                if (location.hash !== '#' + fullHash) {
-                    location.hash = '#' + fullHash;
-                    go(fullHash, name);
-                }
-            });
-            router[fullHash] = menu;
-            return parent;
-        }
-    }
-
-
 })(function (_obj, _str, _valuer) {
-    var _tempObj = _obj, types = { function: ['(', ').bind(obj)'], object: '()' };
-    var replaceFields = [];
-    while (_tempObj) {
-        replaceFields = replaceFields.concat(Object.getOwnPropertyNames(_tempObj));
-        _tempObj = _tempObj.__proto__;
+    with (_obj) {
+        return eval(_str);
     }
-
-    replaceFields.sort(function (a, b) { return b.length - a.length; }).map(function (field, index) {
-        if (/^[0-9]*$/.test(field.trim())) { return; }
-        var back = _str.match(new RegExp('(\\.|\\[[\\\'"])\\s*' + field.replace('$', '\\$'), 'g'));
-        if (back) {
-            back.forEach(function (match, index) {
-                _str = _str.replace(match, '_' + index + '_');
-            });
-        }
-        _str = _str.replace(new RegExp(field.replace('$', '\\$'), 'g'), '$' + index + '$');
-        if (back) {
-            back.forEach(function (match, index) {
-                _str = _str.replace('_' + index + '_', match);
-            });
-        }
-        return _valuer(_obj, field);
-    }).forEach(function (val, index) {
-        var type = types[typeof val] || '  '
-        _str = _str.replace(new RegExp('\\$' + index + '\\$', 'g'), type[0] + JSON.stringify(val) + type[1]);
-    });
-
-    return eval(_str);
 }));

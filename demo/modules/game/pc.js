@@ -13,22 +13,22 @@
                 '   <div [item:items]>',
                 '       <label [innerHTML]="$index +\'  \'+ item.name"></label> ',
                 '       <input [value]="item.value"> ',
-                '       <button [onclick]="remove">&times;</button>',
+                '       <button [onclick]="remove(item)">&times;</button>',
                 '   </div>',
                 '   <div>循环后面</div>',
-                '   <button [onclick]="add">Add Item</button>',
+                '   <button [onclick]="add(items.length)">Add Item</button>',
                 '</div>'
             ].join(''), {
                     title: 'Game PC',
                     checked:true,
                     name: name,
                     items:[{name:'*1',value:1},{name:'-2',value:2},{name:'+3',value:3}],
-                    add:function(){
-                        this.items = this.items.concat([{name:'--',value:Math.floor(Math.random() * 100)}]);
+                    add:function(index){
+                        this.items = this.items.concat([{name:index,value:Math.floor(Math.random() * 100)}]);
                     },
-                    remove:function(){
+                    remove:function(item){
                         var self = this;
-                        this.items = this.items.filter(function(i){return i != self.item;});
+                        this.items = this.items.filter(function(i){return i != item;});
                     }
                 });
         }
