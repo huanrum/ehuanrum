@@ -538,9 +538,12 @@
 
         //on开头的都被认为是事件
         function events() {
-            if (element.nodeName === 'IFRAME') {
-                $value(element, field, $value(data, value));
-                $value(element, field).call(data, element, field);
+            if (field === 'onload') {
+                if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
+                        $value(data, value).call(data, element)
+                    } else {
+                        $value(data, value);
+                    }
             } else {
                 element.addEventListener(field.replace('on', '').trim(), function () {
                     if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {

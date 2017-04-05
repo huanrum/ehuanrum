@@ -11,7 +11,7 @@
             };
             var dialog = $e('binding')([
                 ' <div class="common-dialog-back">',
-                '   <div class="common-dialog">',
+                '   <div class="common-dialog" [style.background]="background">',
                 '       <div class="common-dialog-header">',
                 '           <label>',
                             data.title || 'no title',
