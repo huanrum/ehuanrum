@@ -158,9 +158,9 @@
         }
     }
 
-    function filter(str){
-        str = str.replace(/\$\S*\$/,'');
-        return str.split(/\s+/).map(function(c){
+    function filter(str) {
+        str = str.replace(/\$\S*\$/, '');
+        return str.split(/\s+/).map(function (c) {
             return c[0].toLocaleUpperCase() + c.slice(1);
         }).join('');
     }
@@ -203,10 +203,10 @@
         function createElement(name, menu, fullHash) {
             var parent = document.createElement('span');
             parent.innerHTML = ehuanrum('filter')(name);
-            if(ehuanrum('filter.menu')){
-                parent.innerHTML = ehuanrum('filter.menu')(parent.innerHTML,name);
+            if (ehuanrum('filter.menu')) {
+                parent.innerHTML = ehuanrum('filter.menu')(parent.innerHTML, name);
             }
-            
+
             parent.addEventListener('click', function () {
                 if (location.hash !== '#' + fullHash) {
                     location.hash = '#' + fullHash;
@@ -333,15 +333,46 @@
 
         return element;
 
+        function _$extend(oldObject, newObject, pros) {
+            var fromPros = pros, toPros = pros;
+            if (!(pros instanceof Array)) {
+                fromPros = Object.keys(pros);
+                toPros = Object.values(pros);
+            }
+            toPros.forEach(function (to, i) {
+                var from = fromPros[i], tempData = $value(oldObject, from);
+                Object.defineProperty(oldObject, from, {
+                    configurable: true,
+                    enumerable: true,
+                    set: function (val) {
+                        $value(newObject, to, val);
+                    },
+                    get: function () {
+                        return $value(newObject, to);
+                    }
+                });
+                Object.defineProperty(newObject, to, {
+                    configurable: true,
+                    enumerable: true,
+                    set: function (val) {
+                        tempData = val;
+                    },
+                    get: function () {
+                        return tempData;
+                    }
+                });
+            });
+            return newObject;
+        }
+
         function initBindingDefineProperty() {
             if (!data.$eval || (data.$eval === data.__proto__.$eval)) {
 
                 Object.defineProperty(data, '$id', { value: ++chaceData.binding$id });
                 Object.defineProperty(data, '$eval', { value: [] });
-                Object.defineProperty(data, '$real', { value: function(){return JSON.parse(JSON.stringify(data) || 'null');}});
-                element.apply = function () {
-                data.$eval.forEach(function (ev) { ev.fn() });
-            };
+                Object.defineProperty(data, '$real', { value: function () { return JSON.parse(JSON.stringify(data) || 'null'); } });
+                Object.defineProperty(data, '$extend', { value: function (newObject, pros) { return _$extend(data, newObject, pros); } });
+                Object.defineProperty(data, '$apply', { value: function () { data.$eval.forEach(function (ev) { ev.fn() }); } });
 
                 if (data === window) { return; }//不给window添加set/get
                 Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof EventTarget); }).forEach(function (pro) {
@@ -395,7 +426,7 @@
                     //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
                 } else if (child.scope() !== data && data !== window) {
                     child.scope().__proto__ = data;
-                    //data.$eval.push({});
+                    data.$eval.push({ eval: '', fn: child.scope().$apply });
                 }
             });
         }
@@ -404,7 +435,7 @@
             element.scope = function () {
                 return data;
             };
-           
+
         }
 
         function $name(name) {
@@ -447,23 +478,59 @@
                     property();
                 }
             } else {
-                data.$eval.push({
-                    eval: value, fn: function () {
-                        var tempV = $value(data, value.replace(/\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g, ''));
-                        if (value.match(/\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g)) {
-                            value.match(/\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g).forEach(function (filter) {
-                                var filterFn = filter.split('(')[0].replace('|','').trim();
-                                if (filter.split(/[\(\)]/g)[1]) {
-                                    var filterArgs = filter.split(/[\(\)]/g)[1].split(',').map(function (arg) {
-                                        return $value(data, arg.trim());
-                                    });
-                                    tempV = ehuanrum('filter.' + filterFn).apply(ehuanrum('filter'), [tempV].concat(filterArgs));
-                                } else {
-                                    tempV = ehuanrum('filter.' + filterFn)(tempV);
-                                }
-                            });
+                descriptorFileds(data, value, applyElement);
+                data.$eval.push({ eval: value, fn: applyElement });
+            }
+        }
+
+        function applyElement() {
+            var regExp = /\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g;
+            var tempV = $value(data, value.replace(regExp, ''));
+            if (value.match(regExp)) {
+                value.match(regExp).forEach(function (filter) {
+                    var filterFn = filter.split('(')[0].replace('|', '').trim();
+                    if (filter.split(/[\(\)]/g)[1]) {
+                        var filterArgs = filter.split(/[\(\)]/g)[1].split(',').map(function (arg) {
+                            return $value(data, arg.trim());
+                        });
+                        tempV = ehuanrum('filter.' + filterFn).apply(ehuanrum('filter'), [tempV].concat(filterArgs));
+                    } else {
+                        tempV = ehuanrum('filter.' + filterFn)(tempV);
+                    }
+                });
+            }
+            $value(element, field, tempV);
+        }
+
+        function descriptorFileds(data, expression, fn) {
+            expression.replace(/\'((?!\').)*\'/g,'').split(/[+\-*/%\|\&\(\)=\?\:,!]/).filter(function (i) { return !!i.trim(); }).forEach(function (fi) {
+                if (/\[.*\]/.test(fi)) {
+                    fi.match(/\[[0-9a-zA-Z\.]*\]/g).forEach(function (f) {
+                        fi = fi.replace(f, '.' + $value(data, f.replace(/[\[\]]/g, '')));
+                    });
+                }
+
+                var td = data;
+                fi.split('.').forEach(function (f) {
+                    de(td, f);
+                    td = td[f] || {};
+                });
+            });
+            function de(td, tf) {
+                var descriptor = __getOwnPropertyDescriptor(td, tf);
+                Object.defineProperty(td, tf, {
+                    configurable: true,
+                    enumerable: descriptor.enumerable,
+                    set: function (val) {
+                        if (descriptor.set) {
+                            descriptor.set(val);
+                        }else{
+                            descriptor.value = val;
                         }
-                        $value(element, field, tempV);
+                        fn();
+                    },
+                    get: function () {
+                        return descriptor.get && descriptor.get() || descriptor.value;
                     }
                 });
             }
@@ -567,8 +634,9 @@
                         });
                         da.__proto__ = data;
                         bindElement = binding(element.outerHTML.replace('[' + field + ']=""', ''), da);
+                        data.$eval.push({ eval: '', fn: da.$apply });
                     } else {
-                        bindElement.apply();
+                        bindElement.scope().$apply();
                     }
                     nextSibling.before(bindElement);
                     return { t: item, e: bindElement };
