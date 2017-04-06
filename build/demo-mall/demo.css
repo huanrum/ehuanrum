@@ -1,5 +1,19 @@
-
-
+.login-controller{
+    position: fixed;
+    width: 20em;
+    height: 12em;
+	margin-left: 50%;
+	top: 50%;
+	transform:translate(-50%,-50%);
+	padding : 2em 2px;
+	border-radius : 10px;
+    font-size: 1.5em;
+    border:2px solid red;
+}
+.login-controller>*{
+    padding: 0.5em;
+    text-align: center;
+}
 /*my-login*/
 .my-login{
     text-align: center;
@@ -42,6 +56,13 @@
     height:2em;
     padding: 1em;
     background: #d3d3d3;
+}
+.ehuanrum-content .content-header .left{
+    float: left;
+}
+.ehuanrum-content .content-header .right{
+    float: right;
+    cursor: pointer;
 }
 
 .ehuanrum-content .content-content{

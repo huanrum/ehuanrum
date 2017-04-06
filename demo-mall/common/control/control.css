@@ -1,0 +1,36 @@
+/*my-login*/
+.my-login{
+    text-align: center;
+    border: 1px solid #e3e3e3;
+}
+.my-login>*{
+    padding: 1em
+}
+
+/*my-grid*/
+.table-header .table-row>*,.table-body .table-row>*{
+    display: inline-block;
+    width: 10rem;
+    padding: 0.5rem;
+    border-right: 1px solid #e3e3e3;
+}
+.table-header{
+    font-size: 1.2rem;
+    color:#ffffff;
+    background: #666699;
+}
+.table-body .table-row{
+    border: 1px solid #d3d3d3;
+}
+.table-body .table-row>*{
+    background: #f3f3f3;
+}
+.table-body .table-row:nth-child(2n),.table-body .table-row:nth-child(2n)>*{
+    background: #d3d3d3;
+}
+.table-body .table-row:hover{
+    opacity: 0.8;
+}
+.table-body .table-row>*:hover{
+    background: #99f399;
+}

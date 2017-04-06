@@ -19,15 +19,28 @@
         window.addEventListener('load', function () {
             var routerUrl = {}, paths = location.hash.replace('#', '').split('/');
             binding(document.body, window);
-            document.body.appendChild(chaceData.menu);
-            document.body.appendChild(chaceData.content);
-            chaceData.menu.appendChild(__createMenu(ehuanrum('router'), routerUrl, go, ''));
 
-            go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
+            chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
+
+            if (ehuanrum('main')) {
+                ehuanrum('main')(goin);
+            } else {
+                goin();
+            }
+
+            function goin() {
+                document.body.appendChild(chaceData.menu);
+                document.body.appendChild(chaceData.content);
+                go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
+            }
 
             function go(menu) {
                 if (typeof menu === 'string') {
-                    arguments[0] = routerUrl[menu];
+                    if (/^router\./.test()) {
+                        arguments[0] = routerUrl[menu.replace('.', '/').replace('router', '/')];
+                    } else {
+                        arguments[0] = routerUrl[menu];
+                    }
                     go.apply(this, arguments);
                 } else if (typeof menu === 'function') {
                     chaceData.content.innerHTML = '';
@@ -41,6 +54,7 @@
     ehuanrum('filter', function () { return filter; });
     ehuanrum('binding', function () { return binding; });
     ehuanrum('value', function () { return $value; });
+
 
     return function () {
         return ehuanrum;
@@ -170,13 +184,13 @@
         var element = document.createElement('ul');
         Object.keys(menus).forEach(function (m) {
             var menuElement = document.createElement('div');
-            var menuSpan = createElement(m, menus[m], (hash || '') + '/' + m);
+            var menuSpan = createElement(m, menus[m], (hash || '') + '/' + m.replace(/\$\S*\$/, ''));
             element.appendChild(menuElement);
             menuElement.appendChild(menuSpan);
             if (Object.keys(menus).length) {
-                var childMenu = __createMenu(menus[m], router, go, (hash || '') + '/' + m);
+                var childMenu = __createMenu(menus[m], router, go, (hash || '') + '/' + m.replace(/\$\S*\$/, ''));
                 menuElement.appendChild(childMenu);
-                menuSpan.addEventListener('click', menuAction(menuSpan, childMenu, m));
+                menuSpan.addEventListener('click', menuAction(menuSpan, childMenu, m.replace(/\$\S*\$/, '')));
             }
         });
         return element;
@@ -317,8 +331,20 @@
 
     //用作双向绑定的功能部分
     function binding(element, data, parentNode) {
+        if(typeof parentNode === 'string'){
+            chaceData.content.innerHTML = '';
+            location.hash = '#' + parentNode.replace(/\./g,'/')
+            parentNode = null;
+        }
         if (typeof element === 'string') {
             element = createElement(element);
+            (parentNode || chaceData.content).appendChild(element);
+        }
+        if(typeof element[0] === 'string' && typeof element[1] === 'object'){
+            Object.keys(element[1]).forEach(function(k){
+                element[0] = element[0].replace(new RegExp('\\{\\s*'+k+'\\s*\\}','g'),element[1][k]||'');
+            });
+            element = createElement(element[0]);
             (parentNode || chaceData.content).appendChild(element);
         }
         if (!element instanceof HTMLElement) {
@@ -503,7 +529,7 @@
         }
 
         function descriptorFileds(data, expression, fn) {
-            expression.replace(/\'((?!\').)*\'/g,'').split(/[+\-*/%\|\&\(\)=\?\:,!]/).filter(function (i) { return !!i.trim(); }).forEach(function (fi) {
+            expression.replace(/\'((?!\').)*\'/g, '').split(/[+\-*/%\|\&\(\)=\?\:,!]/).filter(function (i) { return !!i.trim(); }).forEach(function (fi) {
                 if (/\[.*\]/.test(fi)) {
                     fi.match(/\[[0-9a-zA-Z\.]*\]/g).forEach(function (f) {
                         fi = fi.replace(f, '.' + $value(data, f.replace(/[\[\]]/g, '')));
@@ -524,7 +550,7 @@
                     set: function (val) {
                         if (descriptor.set) {
                             descriptor.set(val);
-                        }else{
+                        } else {
                             descriptor.value = val;
                         }
                         fn();
@@ -540,10 +566,10 @@
         function events() {
             if (field === 'onload') {
                 if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
-                        $value(data, value).call(data, element)
-                    } else {
-                        $value(data, value);
-                    }
+                    $value(data, value).call(data, element)
+                } else {
+                    $value(data, value);
+                }
             } else {
                 element.addEventListener(field.replace('on', '').trim(), function () {
                     if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
@@ -589,7 +615,7 @@
         }
 
         function foreach(fields) {
-            var elements = [], nextSibling = element.nextSibling, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
+            var elements = [], nextSibling = element.nextSibling,parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
             element.parentNode.removeChild(element);
             Object.defineProperty(data, fields[1], {
                 configurable: true,
@@ -641,7 +667,11 @@
                     } else {
                         bindElement.scope().$apply();
                     }
-                    nextSibling.before(bindElement);
+                    if(nextSibling){
+                        nextSibling.before(bindElement);
+                    }else{
+                        parentNode.appendChild(bindElement);
+                    }
                     return { t: item, e: bindElement };
                 });
 
