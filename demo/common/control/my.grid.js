@@ -8,7 +8,9 @@
             var newData = data.$extend({
                 select: data.select,
                 show: function (item) {
-                    common_dialog(JSON.stringify(item), {});
+                    common_dialog('<div [my.form]="item"></div>', {item:item,buttons:{
+                        'Ok':function(){this.$close();}
+                    }});
                 }
             }, [field]);
             Object.defineProperty(newData, 'columns', {
@@ -31,7 +33,7 @@
                 '<div >',
                 '   <div class="table-header">',
                 '       <div class="table-row">',
-                '           <div [column:columns] [innerHTML]="column" [class]="\'cell-\' + $index"></div>',
+                '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
                 '       </div>',
                 '   </div>',
                 '   <div class="table-body">',

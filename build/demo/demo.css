@@ -37,6 +37,20 @@
     background: #99f399;
 }
 
+/*my-form*/
+.form-body .form-row{
+    padding: 1em;
+}
+.form-body .form-row>*{
+    display: inline-block;
+}
+.form-body .form-row label{
+    width: 30%;
+    font-weight: bold;
+}
+.form-body .form-row div{
+    width: calc(70% - 2em);
+}
 /*page*/
 .ehuanrum-content .content-header{
     height:2em;
@@ -78,7 +92,16 @@
 .common-dialog-back .common-dialog .common-dialog-content{
      min-height: 6em;
      min-width: 8em;
+     padding: 1em;
 }
 .common-dialog-back .common-dialog .common-dialog-footer{
     border-top: 1px solid #d3d3d3;
+    text-align: center;
+    padding: 2px;
+}
+
+.common-dialog-back .common-dialog .common-dialog-footer a{
+    border: 1px solid #666699;
+    padding: 2px;
+    cursor: pointer;
 }

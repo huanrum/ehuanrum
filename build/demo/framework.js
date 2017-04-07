@@ -641,16 +641,18 @@
                         it.e.parentNode.removeChild(it.e);
                     }
                 });
-                elements = Array.prototype.map.call(vals, function (item, i) {
+                elements = map(vals, function (item, i) {
                     var bindElement = (elements.find(function (it) { return it.t === item; }) || {}).e;
                     if (!bindElement) {
                         var da = { $index: i };
-                        Object.defineProperty(da, '$index', {
+                        if(typeof i === 'number'){
+                            Object.defineProperty(da, '$index', {
                             enumerable: false,
                             get: function () {
-                                return $value(data, fields[1]).map(function (x) { return '' + x; }).indexOf('' + item);
+                                return map($value(data, fields[1]),function (x) { return '' + x; }).indexOf('' + item);
                             }
                         });
+                        }
                         Object.defineProperty(da, fields[0], {
                             configurable: true,
                             enumerable: true,
@@ -674,6 +676,17 @@
                     }
                     return { t: item, e: bindElement };
                 });
+
+                function map(obj,fn){
+                    if('length' in obj){
+                        return Array.prototype.map.call(obj,fn);
+                    }else if(obj && typeof obj === 'object'){
+                        return Array.prototype.map.call(Object.keys(obj),function(k){
+                            return fn(obj[k],k,obj);
+                        });
+                    }
+                    return [];
+                }
 
             }
         }

@@ -5,7 +5,7 @@
     $e('common.dialog',function(){
         return function(child,data){
             data = data || {};
-            data.buttons = data.buttons || [];
+            data.buttons = data.buttons || {};
             data.$close = function(){
                 dialog.parentNode.removeChild(dialog);
             };
@@ -22,7 +22,7 @@
                             child,
                 '       </div>',
                 '       <div class="common-dialog-footer">',
-                '           <a [btn:buttons] [onclick]="btn" [innerHTML]="btn.name"></a>',
+                '           <a [btn:buttons] [onclick]="btn" [innerHTML]="$index"></a>',
                 '       </div>',
                 '   </div>',
                 ' </div>'

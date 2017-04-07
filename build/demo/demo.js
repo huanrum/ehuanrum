@@ -19,18 +19,6 @@
 (function ($e) {
     'use strict';
 
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
     //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
 
     $e('control.ehr.checkbox',function(){
@@ -57,12 +45,42 @@
 
     //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
 
+    $e('control.my.form', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
+        return function (element, data, field) {
+            var newData = data.$extend({}, [field]);
+            Object.defineProperty(newData, 'fields', {
+                configurable: true,
+                enumerable: false,
+                get: function () {
+                    return  Object.keys(value(data, field));
+                }
+            });
+
+            binding([
+                '   <div class="form-body">',
+                '       <div [field:fields] class="form-row">',
+                '           <label [innerHTML]="field"></label>',
+                '           <div [innerHTML]="item[field]"></div>',
+                '       </div>',
+                '   </div>',
+            ].join(''), newData, element);
+        }
+    }]);
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
     $e('control.my.grid', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
         return function (element, data, field) {
             var newData = data.$extend({
                 select: data.select,
                 show: function (item) {
-                    common_dialog(JSON.stringify(item), {});
+                    common_dialog('<div [my.form]="item"></div>', {item:item,buttons:{
+                        'Ok':function(){this.$close();}
+                    }});
                 }
             }, [field]);
             Object.defineProperty(newData, 'columns', {
@@ -85,7 +103,7 @@
                 '<div >',
                 '   <div class="table-header">',
                 '       <div class="table-row">',
-                '           <div [column:columns] [innerHTML]="column" [class]="\'cell-\' + $index"></div>',
+                '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
                 '       </div>',
                 '   </div>',
                 '   <div class="table-body">',
@@ -127,10 +145,22 @@
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.dialog',function(){
         return function(child,data){
             data = data || {};
-            data.buttons = data.buttons || [];
+            data.buttons = data.buttons || {};
             data.$close = function(){
                 dialog.parentNode.removeChild(dialog);
             };
@@ -147,7 +177,7 @@
                             child,
                 '       </div>',
                 '       <div class="common-dialog-footer">',
-                '           <a [btn:buttons] [onclick]="btn" [innerHTML]="btn.name"></a>',
+                '           <a [btn:buttons] [onclick]="btn" [innerHTML]="$index"></a>',
                 '       </div>',
                 '   </div>',
                 ' </div>'
@@ -221,6 +251,39 @@
     });
 
 })(window.$ehr);
+/**
+ * Created by Administrator on 2017/3/28.
+ */
+(function ($e) {
+    'use strict';
+
+    //界面上的菜单数据以及路由和界面,必须以router.开头
+    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
+
+        return function (name) {
+            return common_page([
+               '<div [my.grid]="items"></div>'
+            ].join(''),{
+                    title:'Learn',
+                    items:service_learn.get(),
+                    select:function(){
+                        service_learn.select(this.item);
+                    }
+            });
+        }
+    }]);
+
+     $e('service.learn', ['common_service',function (common_service) {
+
+        var service = common_service({fields:['id','name','value','date']});
+        service.load();
+        return service;
+
+    }]);
+
+
+})(window.$ehr);
+
 /**
  * Created by Administrator on 2017/3/28.
  */
@@ -379,39 +442,6 @@
 
             return binding;
         }
-    }]);
-
-
-})(window.$ehr);
-
-/**
- * Created by Administrator on 2017/3/28.
- */
-(function ($e) {
-    'use strict';
-
-    //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
-
-        return function (name) {
-            return common_page([
-               '<div [my.grid]="items"></div>'
-            ].join(''),{
-                    title:'Learn',
-                    items:service_learn.get(),
-                    select:function(){
-                        service_learn.select(this.item);
-                    }
-            });
-        }
-    }]);
-
-     $e('service.learn', ['common_service',function (common_service) {
-
-        var service = common_service({fields:['id','name','value','date']});
-        service.load();
-        return service;
-
     }]);
 
 
