@@ -22,7 +22,7 @@
                             child,
                 '       </div>',
                 '       <div class="common-dialog-footer">',
-                '           <a [btn:buttons] [onclick]="btn" [innerHTML]="$index"></a>',
+                '           <a [btn:buttons] [onclick]="btn" [innerHTML]="$index|capitalize"></a>',
                 '       </div>',
                 '   </div>',
                 ' </div>'

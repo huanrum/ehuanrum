@@ -9,7 +9,8 @@
                 select: data.select,
                 show: function (item) {
                     common_dialog('<div [my.form]="item"></div>', {item:item,buttons:{
-                        'Ok':function(){this.$close();}
+                        'ok':function(){common_dialog('提交数据');},
+                        'cancel':function(){this.$close();}
                     }});
                 }
             }, [field]);
