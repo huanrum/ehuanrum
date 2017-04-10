@@ -190,7 +190,7 @@ $ehr('main',['global',function(global){
                 title: data.title || 'no title',
                 content: child,
                 footer: data.footer
-            }], data);
+            }], data,controller);
         }
     }]);
 
@@ -235,37 +235,6 @@ $ehr('main',['global',function(global){
 
 })(window.$ehr);
 
-$ehr('personal',['binding',function(binding){
-
-    var template = [
-        '<div>',
-        '   <div [innerHTML]="item.title"></div>',
-        '   <div [item:items]>',
-        '       <label [innerHTML]="item.label"></label>',
-        '       <div [innerHTML]="item.value"></div>',
-        '   </div>',
-        '</div>'
-    ].join('');
-
-    return function(user){
-        var userData = {
-            name:user,
-            email:'huanrum@126.com'
-        };
-
-        binding(template,{
-            title:'个人信息',
-            items:Object.keys(userData).map(function(k){
-                return {
-                    label:k,
-                    value:userData[k]
-                };
-            })
-        },'personal');
-    };
-
-}]);
-
 $ehr('router.home',['common_page',function(common_page){
 
     var template = [
@@ -278,8 +247,7 @@ $ehr('router.home',['common_page',function(common_page){
     ].join('');
 
     return function(){
-        return common_page(template,function(data){
-            data.title = 'Home';
+        return common_page(template,{title : 'Home'},function(data){
             data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
             data.info = [
                 '此项目中主要包含两个分块：商品展示和商品管理。',
@@ -290,6 +258,30 @@ $ehr('router.home',['common_page',function(common_page){
             ].join('<br>');
             data.contact = 'email: <i>huanrum@126.com</i>';
         });
+    };
+
+}]);
+
+$ehr('personal', ['binding', function (binding) {
+
+    var template = [
+        '<div>',
+        '   <div [innerHTML]="title"></div>',
+        '   <div [value:item]>',
+        '       <label [innerHTML]="$index"></label>',
+        '       <div [innerHTML]="value"></div>',
+        '   </div>',
+        '</div>'
+    ].join('');
+
+    return function (user) {
+        binding(template, function (scope) {
+            scope.title = '个人信息';
+            scope.item = {
+                name: user,
+                email: 'huanrum@126.com'
+            };
+        }, 'personal');
     };
 
 }]);

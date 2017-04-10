@@ -11,8 +11,7 @@ $ehr('router.home',['common_page',function(common_page){
     ].join('');
 
     return function(){
-        return common_page(template,function(data){
-            data.title = 'Home';
+        return common_page(template,{title : 'Home'},function(data){
             data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
             data.info = [
                 '此项目中主要包含两个分块：商品展示和商品管理。',

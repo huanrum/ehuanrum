@@ -19,6 +19,18 @@
 (function ($e) {
     'use strict';
 
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
     //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
 
     $e('control.ehr.checkbox',function(){
@@ -163,26 +175,15 @@
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length || 0;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.dialog',['functions_event',function(functions_event){
-        return function(child,data){
+        return function(child,data,controller){
             data = data || {};
             var event = functions_event(data);
             data.buttons = data.buttons || {};
             data.$close = function(){
                 dialog.parentNode.removeChild(dialog);
-                event.fire();
+                data.$destroy();
+                event.fire(data,dialog);
             };
             var dialog = $e('binding')([
                 ' <div class="common-dialog-back">',
@@ -201,12 +202,8 @@
                 '       </div>',
                 '   </div>',
                 ' </div>'
-                ].join(''),data,document.body);
-                return then;
-
-                function then(fn){
-                    event.in(fn);
-                }
+                ].join(''),data,document.body,controller);
+                return event.in;
         }
     }]);
 
@@ -217,9 +214,7 @@
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.page',function(){
         return function(child,data,controller){
-            if(controller){
-                controller(data);
-            }
+           
            return $e('binding')([
                '<div>',
                '   <div class="content-header">',
@@ -232,7 +227,7 @@
                         data.footer || '',
                 '   </div>',
                 '</div>'
-            ].join(''),data);
+            ].join(''),data,controller);
         }
     });
 
@@ -457,13 +452,14 @@
                     color:function(){
                         return functions.color(this.index);
                     }
-            },function(data){
-                setInterval(function(){
-                    data.index = Math.floor(Math.random() * 100);
+            },function(scope){
+                var handel = setInterval(function(){
+                    scope.index = Math.floor(Math.random() * 100);
                 },1000);
+                scope.$destroy(function(){
+                    clearInterval(handel);
+                });
             });
-
-            
 
             return binding;
         };

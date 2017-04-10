@@ -1,31 +1,24 @@
 
-$ehr('personal',['binding',function(binding){
+$ehr('personal', ['binding', function (binding) {
 
     var template = [
         '<div>',
-        '   <div [innerHTML]="item.title"></div>',
-        '   <div [item:items]>',
-        '       <label [innerHTML]="item.label"></label>',
-        '       <div [innerHTML]="item.value"></div>',
+        '   <div [innerHTML]="title"></div>',
+        '   <div [value:item]>',
+        '       <label [innerHTML]="$index"></label>',
+        '       <div [innerHTML]="value"></div>',
         '   </div>',
         '</div>'
     ].join('');
 
-    return function(user){
-        var userData = {
-            name:user,
-            email:'huanrum@126.com'
-        };
-
-        binding(template,{
-            title:'个人信息',
-            items:Object.keys(userData).map(function(k){
-                return {
-                    label:k,
-                    value:userData[k]
-                };
-            })
-        },'personal');
+    return function (user) {
+        binding(template, function (scope) {
+            scope.title = '个人信息';
+            scope.item = {
+                name: user,
+                email: 'huanrum@126.com'
+            };
+        }, 'personal');
     };
 
 }]);

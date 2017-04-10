@@ -42,7 +42,7 @@
                 title: data.title || 'no title',
                 content: child,
                 footer: data.footer
-            }], data);
+            }], data,controller);
         }
     }]);
 

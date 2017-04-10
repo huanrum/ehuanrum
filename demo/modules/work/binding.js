@@ -24,13 +24,14 @@
                     color:function(){
                         return functions.color(this.index);
                     }
-            },function(data){
-                setInterval(function(){
-                    data.index = Math.floor(Math.random() * 100);
+            },function(scope){
+                var handel = setInterval(function(){
+                    scope.index = Math.floor(Math.random() * 100);
                 },1000);
+                scope.$destroy(function(){
+                    clearInterval(handel);
+                });
             });
-
-            
 
             return binding;
         };

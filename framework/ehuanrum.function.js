@@ -6,6 +6,7 @@
 
     //功能部分
     $e('functions.color', function () {
+        //根据index计算出一种颜色
         return function (index) {
             if (!index) {
                 var color = Math.floor(Math.random() * 256 * 256 * 256).toString(16).slice(-6);
@@ -22,27 +23,30 @@
         };
     });
 
-     $e('functions.event', function () {
-            return function(scope){
-                var thenlist = [];
-                 
-                 return Object.create({
-                     in:function(fn){
-                        thenlist.push(fn);
-                     },
-                     out:function(fn){
-                         if(!fn){return;};
-                        thenlist = thenlist.filter(function(i){
-                            return (typeof fn === 'function' && i !== fn) || 
-                             (typeof fn === 'string' && i.name !== fn)
-                        });
-                     },
-                     fire:function(){
-                        var args = arguments;
-                        thenlist.forEach(function(fn){fn.apply(scope,args);});
-                     }
-                 })
+    $e('functions.event', function () {
+        //构建一个事件对象
+        return function (scope) {
+            var thenlist = [];
+
+            function push(fn){
+                thenlist.push(fn);
+                return push;
             }
-     });
+            return Object.create({
+                in: push,
+                out: function (fn) {
+                    if (!fn) { return; };
+                    thenlist = thenlist.filter(function (i) {
+                        return (typeof fn === 'function' && i !== fn) ||
+                            (typeof fn === 'string' && i.name !== fn)
+                    });
+                },
+                fire: function () {
+                    var args = arguments;
+                    thenlist.forEach(function (fn) { fn.apply(scope, args); });
+                }
+            })
+        }
+    });
 
 })(window.$ehr);

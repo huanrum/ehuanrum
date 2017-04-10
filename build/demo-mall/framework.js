@@ -19,9 +19,9 @@
         window.addEventListener('load', function () {
             var routerUrl = {}, paths = location.hash.replace('#', '').split('/');
             binding(document.body, window);
-
+            //根据对应的router功能构建菜单
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
-
+            //如果有对应的main处理逻辑就先运行它
             if (ehuanrum('main')) {
                 ehuanrum('main')(goin);
             } else {
@@ -29,18 +29,16 @@
             }
 
             function goin() {
+                //添加菜单和内容显示用的容器,并根据路径初始化界面
                 document.body.appendChild(chaceData.menu);
                 document.body.appendChild(chaceData.content);
                 go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
             }
 
             function go(menu) {
+                //路由跳转
                 if (typeof menu === 'string') {
-                    if (/^router\./.test()) {
-                        arguments[0] = routerUrl[menu.replace('.', '/').replace('router', '/')];
-                    } else {
-                        arguments[0] = routerUrl[menu];
-                    }
+                    arguments[0] = routerUrl[menu.replace(/^\s*router\./, '/')];
                     go.apply(this, arguments);
                 } else if (typeof menu === 'function') {
                     chaceData.content.innerHTML = '';
@@ -50,7 +48,7 @@
         });
     }
 
-    //把下面的两个功能提供出去
+    //把下面的几个功能提供出去
     ehuanrum('filter', function () { return filter; });
     ehuanrum('binding', function () { return binding; });
     ehuanrum('value', function () { return $value; });
@@ -177,6 +175,18 @@
         return str.split(/\s+/).map(function (c) {
             return c[0].toLocaleUpperCase() + c.slice(1);
         }).join('');
+    }
+
+    function _event(scope) {
+        var templist = [];
+        return function (fn) {
+            if (typeof fn === 'function' && arguments.length === 1) {
+                templist.push(fn);
+            } else {
+                var args = arguments;
+                templist.forEach(function (i) { i.apply(scope, args) });
+            }
+        }
     }
 
     //完成菜单和路由的构建，它是不对外公开的,若外部定义了相关的menuAction操作就用外部的，否则就用默认的
@@ -330,19 +340,22 @@
     };
 
     //用作双向绑定的功能部分
-    function binding(element, data, parentNode) {
-        if(typeof parentNode === 'string'){
+    function binding(element, data, parentNode, controller) {
+        if (typeof parentNode === 'string') {
             chaceData.content.innerHTML = '';
-            location.hash = '#' + parentNode.replace(/\./g,'/')
+            location.hash = '#' + parentNode.replace(/\./g, '/')
+            parentNode = null;
+        } else if (typeof parentNode === 'function') {
+            controller = parentNode;
             parentNode = null;
         }
         if (typeof element === 'string') {
             element = createElement(element);
             (parentNode || chaceData.content).appendChild(element);
         }
-        if(typeof element[0] === 'string' && typeof element[1] === 'object'){
-            Object.keys(element[1]).forEach(function(k){
-                element[0] = element[0].replace(new RegExp('\\{\\s*'+k+'\\s*\\}','g'),element[1][k]||'');
+        if (typeof element[0] === 'string' && typeof element[1] === 'object') {
+            Object.keys(element[1]).forEach(function (k) {
+                element[0] = element[0].replace(new RegExp('\\{\\s*' + k + '\\s*\\}', 'g'), element[1][k] || '');
             });
             element = createElement(element[0]);
             (parentNode || chaceData.content).appendChild(element);
@@ -350,10 +363,14 @@
         if (!element instanceof HTMLElement) {
             throw new Error('element必须是DOM元素。');
         }
+        if (typeof data === 'function') {
+            controller = data;
+            data = {};
+        }
 
         initBindingDefineProperty();
         initBindingElement();
-        data.$eval.forEach(function (ev) { ev.fn() });
+        data.$eval();
 
         extendElement(element, data);
 
@@ -395,11 +412,14 @@
             if (!data.$eval || (data.$eval === data.__proto__.$eval)) {
 
                 Object.defineProperty(data, '$id', { value: ++chaceData.binding$id });
-                Object.defineProperty(data, '$eval', { value: [] });
+                Object.defineProperty(data, '$destroy', { value: _event(data) });
+                Object.defineProperty(data, '$eval', { value: _event(data) });
                 Object.defineProperty(data, '$real', { value: function () { return JSON.parse(JSON.stringify(data) || 'null'); } });
                 Object.defineProperty(data, '$extend', { value: function (newObject, pros) { return _$extend(data, newObject, pros); } });
-                Object.defineProperty(data, '$apply', { value: function () { data.$eval.forEach(function (ev) { ev.fn() }); } });
 
+                if (controller) {
+                    controller(data, element);
+                }
                 if (data === window) { return; }//不给window添加set/get
                 Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof EventTarget); }).forEach(function (pro) {
                     var oldVal = data[pro], descriptor = __getOwnPropertyDescriptor(data, pro) || {};
@@ -411,7 +431,7 @@
                             if (descriptor.set) {
                                 descriptor.set(val);
                             }
-                            data.$eval.forEach(function (ev) { ev.fn() });
+                            data.$eval();
                         },
                         get: function () {
                             var getValue = (descriptor.get && descriptor.get());
@@ -419,12 +439,15 @@
                         }
                     });
                 });
+
+                element.addEventListener('unload', data.$destroy);
             }
         }
 
         function initBindingElement() {
             //把[]关起来的属性设置双向绑定
             var controls = ehuanrum('control');
+
             Array.prototype.filter.call(element.attributes || [], function (attr) {
                 return /^\[.+\]$/.test(attr.name);
             }).sort(function (a, b) {
@@ -452,7 +475,7 @@
                     //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
                 } else if (child.scope() !== data && data !== window) {
                     child.scope().__proto__ = data;
-                    data.$eval.push({ eval: '', fn: child.scope().$apply });
+                    data.$eval(child.scope().$eval);
                 }
             });
         }
@@ -505,7 +528,7 @@
                 }
             } else {
                 descriptorFileds(data, value, applyElement);
-                data.$eval.push({ eval: value, fn: applyElement });
+                data.$eval(applyElement);
             }
         }
 
@@ -584,11 +607,7 @@
         function property() {
 
             var descriptor = __getOwnPropertyDescriptor(data, value) || {};
-            data.$eval.push({
-                eval: value, fn: function () {
-                    $value(element, field, $value(data, value));
-                }
-            });
+            data.$eval(function () { $value(element, field, $value(data, value)); });
 
             Object.defineProperty(data, value, {
                 configurable: true,
@@ -615,7 +634,7 @@
         }
 
         function foreach(fields) {
-            var elements = [], nextSibling = element.nextSibling,parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
+            var elements = [], nextSibling = element.nextSibling, parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
             element.parentNode.removeChild(element);
             Object.defineProperty(data, fields[1], {
                 configurable: true,
@@ -645,13 +664,13 @@
                     var bindElement = (elements.find(function (it) { return it.t === item; }) || {}).e;
                     if (!bindElement) {
                         var da = { $index: i };
-                        if(typeof i === 'number'){
+                        if (typeof i === 'number') {
                             Object.defineProperty(da, '$index', {
-                            enumerable: false,
-                            get: function () {
-                                return map($value(data, fields[1]),function (x) { return '' + x; }).indexOf('' + item);
-                            }
-                        });
+                                enumerable: false,
+                                get: function () {
+                                    return map($value(data, fields[1]), function (x) { return '' + x; }).indexOf('' + item);
+                                }
+                            });
                         }
                         Object.defineProperty(da, fields[0], {
                             configurable: true,
@@ -665,24 +684,24 @@
                         });
                         da.__proto__ = data;
                         bindElement = binding(element.outerHTML.replace('[' + field + ']=""', ''), da);
-                        data.$eval.push({ eval: '', fn: da.$apply });
+                        data.$eval(da.$eval);
                     } else {
-                        bindElement.scope().$apply();
+                        bindElement.scope().$eval();
                     }
-                    if(nextSibling){
+                    if (nextSibling) {
                         nextSibling.before(bindElement);
-                    }else{
+                    } else {
                         parentNode.appendChild(bindElement);
                     }
                     return { t: item, e: bindElement };
                 });
 
-                function map(obj,fn){
-                    if('length' in obj){
-                        return Array.prototype.map.call(obj,fn);
-                    }else if(obj && typeof obj === 'object'){
-                        return Array.prototype.map.call(Object.keys(obj),function(k){
-                            return fn(obj[k],k,obj);
+                function map(obj, fn) {
+                    if ('length' in obj) {
+                        return Array.prototype.map.call(obj, fn);
+                    } else if (obj && typeof obj === 'object') {
+                        return Array.prototype.map.call(Object.keys(obj), function (k) {
+                            return fn(obj[k], k, obj);
                         });
                     }
                     return [];
@@ -708,6 +727,7 @@
 
     //功能部分
     $e('functions.color', function () {
+        //根据index计算出一种颜色
         return function (index) {
             if (!index) {
                 var color = Math.floor(Math.random() * 256 * 256 * 256).toString(16).slice(-6);
@@ -724,27 +744,28 @@
         };
     });
 
-     $e('functions.event', function () {
-            return function(scope){
-                var thenlist = [];
-                 
-                 return Object.create({
-                     in:function(fn){
-                        thenlist.push(fn);
-                     },
-                     out:function(fn){
-                         if(!fn){return;};
-                        thenlist = thenlist.filter(function(i){
-                            return (typeof fn === 'function' && i !== fn) || 
-                             (typeof fn === 'string' && i.name !== fn)
-                        });
-                     },
-                     fire:function(){
-                        var args = arguments;
-                        thenlist.forEach(function(fn){fn.apply(scope,args);});
-                     }
-                 })
-            }
-     });
+    $e('functions.event', function () {
+        //构建一个事件对象
+        return function (scope) {
+            var thenlist = [];
+
+            return Object.create({
+                in: function (fn) {
+                    thenlist.push(fn);
+                },
+                out: function (fn) {
+                    if (!fn) { return; };
+                    thenlist = thenlist.filter(function (i) {
+                        return (typeof fn === 'function' && i !== fn) ||
+                            (typeof fn === 'string' && i.name !== fn)
+                    });
+                },
+                fire: function () {
+                    var args = arguments;
+                    thenlist.forEach(function (fn) { fn.apply(scope, args); });
+                }
+            })
+        }
+    });
 
 })(window.$ehr);
