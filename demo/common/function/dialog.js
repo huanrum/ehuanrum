@@ -4,10 +4,12 @@
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.dialog',function(){
         return function(child,data){
+            var thenlist = [];
             data = data || {};
             data.buttons = data.buttons || {};
             data.$close = function(){
                 dialog.parentNode.removeChild(dialog);
+                thenlist.forEach(function(fn){fn();});
             };
             var dialog = $e('binding')([
                 ' <div class="common-dialog-back">',
@@ -27,6 +29,11 @@
                 '   </div>',
                 ' </div>'
                 ].join(''),data,document.body);
+                return then;
+
+                function then(fn){
+                    thenlist.push(fn);
+                }
         }
     });
 
