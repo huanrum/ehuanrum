@@ -2,14 +2,14 @@
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('common.dialog',function(){
+    $e('common.dialog',['functions_event',function(functions_event){
         return function(child,data){
-            var thenlist = [];
             data = data || {};
+            var event = functions_event(data);
             data.buttons = data.buttons || {};
             data.$close = function(){
                 dialog.parentNode.removeChild(dialog);
-                thenlist.forEach(function(fn){fn();});
+                event.fire();
             };
             var dialog = $e('binding')([
                 ' <div class="common-dialog-back">',
@@ -32,9 +32,9 @@
                 return then;
 
                 function then(fn){
-                    thenlist.push(fn);
+                    event.in(fn);
                 }
         }
-    });
+    }]);
 
 })(window.$ehr);

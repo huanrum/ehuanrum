@@ -19,18 +19,6 @@
 (function ($e) {
     'use strict';
 
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length || 0;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
     //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
 
     $e('control.ehr.checkbox',function(){
@@ -70,9 +58,7 @@
 
             binding([
                 '   <div class="form-body">',
-                '       <div [field:fields] class="form-row">',
-                '           <label [innerHTML]="field"></label>',
-                '           <div [innerHTML]="item[field]"></div>',
+                '       <div [field:fields] class="form-row" [my.label.value]="'+field+':field">',
                 '       </div>',
                 '   </div>',
             ].join(''), newData, element);
@@ -90,7 +76,7 @@
             var newData = data.$extend({
                 select: data.select,
                 show: function (item) {
-                    common_dialog('<div [my.form]="item"></div>', {item:item,buttons:{
+                    common_dialog('<div [my.form]="item"></div>', {title:'展示一条数据',item:item,buttons:{
                         'ok':function(){common_dialog('提交数据')(this.$close);},
                         'cancel':function(){this.$close();}
                     }});
@@ -135,6 +121,25 @@
 
     //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
 
+    $e('control.my.label.value', ['binding', function (binding) {
+        return function (element, data, field) {
+            var newData = data.$extend({}, field.split(':'));
+
+            binding([
+                '   <div class="label-value">',
+                '       <label [innerHTML]="field"></label>',
+                '       <div [innerHTML]="item[field]"></div>',
+                '   </div>',
+            ].join(''), newData, element);
+        }
+    }]);
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
     $e('control.my.login',function(){
         return function(element,data,field){
             $e('binding')([
@@ -158,14 +163,26 @@
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('common.dialog',function(){
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('common.dialog',['functions_event',function(functions_event){
         return function(child,data){
-            var thenlist = [];
             data = data || {};
+            var event = functions_event(data);
             data.buttons = data.buttons || {};
             data.$close = function(){
                 dialog.parentNode.removeChild(dialog);
-                thenlist.forEach(function(fn){fn();});
+                event.fire();
             };
             var dialog = $e('binding')([
                 ' <div class="common-dialog-back">',
@@ -188,10 +205,10 @@
                 return then;
 
                 function then(fn){
-                    thenlist.push(fn);
+                    event.in(fn);
                 }
         }
-    });
+    }]);
 
 })(window.$ehr);
 (function ($e) {
@@ -292,7 +309,7 @@
                         this.items = this.items.filter(function(i){return i != item;});
                     }
                 });
-        }
+        };
 
     }]);
 
@@ -321,7 +338,7 @@
                         $e('common.dialog')(this.userName+' - '+this.password,{title:'Login Message'});
                     }
                 });
-        }
+        };
 
     }]);
 
@@ -375,7 +392,7 @@
                         }});
                     }
                 });
-        }
+        };
     }]);
 
 })(window.$ehr);
@@ -400,7 +417,7 @@
                         service_learn.select(this.item);
                     }
             });
-        }
+        };
     }]);
 
      $e('service.learn', ['common_service',function (common_service) {
@@ -449,7 +466,7 @@
             
 
             return binding;
-        }
+        };
     }]);
 
 
@@ -475,7 +492,7 @@
                     checked:true,
                     name: name
                 });
-        }
+        };
 
     }]);
 
@@ -501,7 +518,7 @@
                     checked:true,
                     name: name
                 });
-        }
+        };
 
     }]);
 

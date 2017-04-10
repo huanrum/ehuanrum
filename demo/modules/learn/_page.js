@@ -17,7 +17,7 @@
                         service_learn.select(this.item);
                     }
             });
-        }
+        };
     }]);
 
      $e('service.learn', ['common_service',function (common_service) {

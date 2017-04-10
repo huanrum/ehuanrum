@@ -1,0 +1,30 @@
+body{
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+.ehuanrum-menu{
+    position: fixed;
+    height: 100%;
+    width: 16em;
+    float: left;
+    background: #363636;
+    color:#ffffff;
+     div{
+        margin: 10px;
+        span{
+            background: #ff6689;
+            padding: 5px;
+            &:hover{
+                cursor: pointer;
+                background: #996689;
+            }
+        }
+    }
+}
+
+.ehuanrum-content{
+    width: calc(100% - 16em);
+    float: right;
+}

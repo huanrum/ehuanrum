@@ -4,7 +4,7 @@
 (function ($e) {
     'use strict';
 
-    //界面上的菜单数据以及路由和界面,必须以router.开头
+    //功能部分
     $e('functions.color', function () {
         return function (index) {
             if (!index) {
@@ -21,5 +21,28 @@
             }
         };
     });
+
+     $e('functions.event', function () {
+            return function(scope){
+                var thenlist = [];
+                 
+                 return Object.create({
+                     in:function(fn){
+                        thenlist.push(fn);
+                     },
+                     out:function(fn){
+                         if(!fn){return;};
+                        thenlist = thenlist.filter(function(i){
+                            return (typeof fn === 'function' && i !== fn) || 
+                             (typeof fn === 'string' && i.name !== fn)
+                        });
+                     },
+                     fire:function(){
+                        var args = arguments;
+                        thenlist.forEach(function(fn){fn.apply(scope,args);});
+                     }
+                 })
+            }
+     });
 
 })(window.$ehr);

@@ -20,7 +20,7 @@
                         $e('common.dialog')(this.userName+' - '+this.password,{title:'Login Message'});
                     }
                 });
-        }
+        };
 
     }]);
 

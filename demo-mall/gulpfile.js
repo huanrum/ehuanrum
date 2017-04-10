@@ -1,4 +1,5 @@
 var gulp = require('gulp'),
+    sass = require('gulp-sass'),
     minifycss = require('gulp-minify-css'),
     concat = require('gulp-concat'),
     uglify = require('gulp-uglify'),
@@ -12,12 +13,14 @@ var buildDirname = './../build/' + __dirname.split('\\').pop();
 //压缩 framework css
 gulp.task('framework_minify_css', function () {
     var cssSrc = [
-            './../framework/*.css','./../framework/*/*.css'
+            './../framework/*.css','./../framework/*/*.css',
+            './../framework/*.scss','./../framework/*/*.scss'
         ];
 
     del('./../build/demo/framework.css');
     del('./../build/demo/framework.min.css');
     return gulp.src(cssSrc)      //压缩的文件
+        .pipe(sass())
         .pipe(concat('framework.css'))    //合并所有css到all.css
         .pipe(gulp.dest(buildDirname))   //输出文件夹
         .pipe(rename({suffix: '.min'}))
@@ -27,12 +30,14 @@ gulp.task('framework_minify_css', function () {
 //压缩 demo css
 gulp.task('demo_minify_css', function () {
     var cssSrc = [
-            './*.css','./*/*.css','./*/*/*.css','./*/*/*/*.css','./*/*/*/*/*.css'
+            './*.css','./*/*.css','./*/*/*.css','./*/*/*/*.css','./*/*/*/*/*.css',
+             './*.scss','./*/*.scss','./*/*/*.scss','./*/*/*/*.scss','./*/*/*/*/*.scss'
         ];
 
     del('./../build/demo/demo.css');
     del('./../build/demo/demo.min.css');
-    return gulp.src(cssSrc)      //压缩的文件
+    return gulp.src(cssSrc) //压缩的文件
+        .pipe(sass())
         .pipe(concat('demo.css'))    //合并所有css到all.css
         .pipe(gulp.dest(buildDirname))   //输出文件夹
         .pipe(rename({suffix: '.min'}))

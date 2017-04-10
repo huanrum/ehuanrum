@@ -641,16 +641,18 @@
                         it.e.parentNode.removeChild(it.e);
                     }
                 });
-                elements = Array.prototype.map.call(vals, function (item, i) {
+                elements = map(vals, function (item, i) {
                     var bindElement = (elements.find(function (it) { return it.t === item; }) || {}).e;
                     if (!bindElement) {
                         var da = { $index: i };
-                        Object.defineProperty(da, '$index', {
+                        if(typeof i === 'number'){
+                            Object.defineProperty(da, '$index', {
                             enumerable: false,
                             get: function () {
-                                return $value(data, fields[1]).map(function (x) { return '' + x; }).indexOf('' + item);
+                                return map($value(data, fields[1]),function (x) { return '' + x; }).indexOf('' + item);
                             }
                         });
+                        }
                         Object.defineProperty(da, fields[0], {
                             configurable: true,
                             enumerable: true,
@@ -675,6 +677,17 @@
                     return { t: item, e: bindElement };
                 });
 
+                function map(obj,fn){
+                    if('length' in obj){
+                        return Array.prototype.map.call(obj,fn);
+                    }else if(obj && typeof obj === 'object'){
+                        return Array.prototype.map.call(Object.keys(obj),function(k){
+                            return fn(obj[k],k,obj);
+                        });
+                    }
+                    return [];
+                }
+
             }
         }
 
@@ -693,7 +706,7 @@
 (function ($e) {
     'use strict';
 
-    //界面上的菜单数据以及路由和界面,必须以router.开头
+    //功能部分
     $e('functions.color', function () {
         return function (index) {
             if (!index) {
@@ -710,5 +723,28 @@
             }
         };
     });
+
+     $e('functions.event', function () {
+            return function(scope){
+                var thenlist = [];
+                 
+                 return Object.create({
+                     in:function(fn){
+                        thenlist.push(fn);
+                     },
+                     out:function(fn){
+                         if(!fn){return;};
+                        thenlist = thenlist.filter(function(i){
+                            return (typeof fn === 'function' && i !== fn) || 
+                             (typeof fn === 'string' && i.name !== fn)
+                        });
+                     },
+                     fire:function(){
+                        var args = arguments;
+                        thenlist.forEach(function(fn){fn.apply(scope,args);});
+                     }
+                 })
+            }
+     });
 
 })(window.$ehr);

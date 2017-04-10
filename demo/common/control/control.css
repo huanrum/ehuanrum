@@ -37,15 +37,20 @@
 
 /*my-form*/
 .form-body .form-row{
-    padding: 1em;
+    padding: 1em 0;
 }
 .form-body .form-row>*{
     display: inline-block;
 }
-.form-body .form-row label{
+
+
+/*my-label-value*/
+.label-value label{
+    display: inline-block;
     width: 30%;
     font-weight: bold;
 }
-.form-body .form-row div{
+.label-value div{
+    display: inline-block;
     width: calc(70% - 2em);
 }

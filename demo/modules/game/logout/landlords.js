@@ -18,7 +18,7 @@
                     checked:true,
                     name: name
                 });
-        }
+        };
 
     }]);
 

@@ -8,8 +8,8 @@
             var newData = data.$extend({
                 select: data.select,
                 show: function (item) {
-                    common_dialog('<div [my.form]="item"></div>', {item:item,buttons:{
-                        'ok':function(){common_dialog('提交数据')(()=>this.$close());},
+                    common_dialog('<div [my.form]="item"></div>', {title:'展示一条数据',item:item,buttons:{
+                        'ok':function(){common_dialog('提交数据')(this.$close);},
                         'cancel':function(){this.$close();}
                     }});
                 }

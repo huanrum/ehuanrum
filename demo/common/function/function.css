@@ -49,6 +49,7 @@
 
 .common-dialog-back .common-dialog .common-dialog-footer a{
     border: 1px solid #666699;
-    padding: 2px;
+    margin: 2px 1em;
+    padding: 1px;
     cursor: pointer;
 }

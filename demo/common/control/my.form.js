@@ -16,9 +16,7 @@
 
             binding([
                 '   <div class="form-body">',
-                '       <div [field:fields] class="form-row">',
-                '           <label [innerHTML]="field"></label>',
-                '           <div [innerHTML]="item[field]"></div>',
+                '       <div [field:fields] class="form-row" [my.label.value]="'+field+':field">',
                 '       </div>',
                 '   </div>',
             ].join(''), newData, element);

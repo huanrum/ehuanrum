@@ -31,7 +31,7 @@
                         this.items = this.items.filter(function(i){return i != item;});
                     }
                 });
-        }
+        };
 
     }]);
 
