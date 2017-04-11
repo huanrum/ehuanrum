@@ -13,8 +13,8 @@ var buildDirname = './../build/' + __dirname.split('\\').pop();
 //压缩 framework css
 gulp.task('framework_minify_css', function () {
     var cssSrc = [
-            './../framework/*.css','./../framework/*/*.css',
-            './../framework/*.scss','./../framework/*/*.scss'
+            './../framework/*.css','./../framework/*.scss',
+            './../framework/*/*.css','./../framework/*/*.scss'
         ];
 
     del('./../build/demo/framework.css');
@@ -30,8 +30,11 @@ gulp.task('framework_minify_css', function () {
 //压缩 demo css
 gulp.task('demo_minify_css', function () {
     var cssSrc = [
-            './*.css','./*/*.css','./*/*/*.css','./*/*/*/*.css','./*/*/*/*/*.css',
-             './*.scss','./*/*.scss','./*/*/*.scss','./*/*/*/*.scss','./*/*/*/*/*.scss'
+            './*.css','./*.scss',
+            './*/*.css','./*/*.scss',
+            './*/*/*.css','./*/*/*.scss',
+            './*/*/*/*.css','./*/*/*/*.scss',
+            './*/*/*/*/*.css','./*/*/*/*/*.scss'
         ];
 
     del('./../build/demo/demo.css');

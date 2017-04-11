@@ -13,7 +13,7 @@
                         'cancel':function(){this.$close();}
                     }});
                 }
-            }, [field]);
+            }, ['height',field]);
             Object.defineProperty(newData, 'columns', {
                 configurable: true,
                 enumerable: false,
@@ -31,18 +31,16 @@
             });
 
             binding([
-                '<div >',
                 '   <div class="table-header">',
                 '       <div class="table-row">',
                 '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
                 '       </div>',
                 '   </div>',
-                '   <div class="table-body">',
+                '   <div class="table-body" [style.height]="height">',
                 '       <div [item:items] class="table-row" [ondblclick]="show(item)" [onclick]="select">',
                 '           <div [column:columns] [class]="\'cell-\' + $index" [innerHTML]="item[column]"></div>',
                 '       </div>',
-                '   </div>',
-                '</div>'
+                '   </div>'
             ].join(''), newData, element);
         }
     }]);

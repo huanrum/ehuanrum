@@ -8,7 +8,7 @@
             var event = functions_event(data);
             data.buttons = data.buttons || {};
             data.$close = function(){
-                dialog.parentNode.removeChild(dialog);
+                dialog.update();
                 data.$destroy();
                 event.fire(data,dialog);
             };

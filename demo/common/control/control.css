@@ -19,6 +19,9 @@
     color:#ffffff;
     background: #666699;
 }
+.table-body{
+    overflow: auto;
+}
 .table-body .table-row{
     border: 1px solid #d3d3d3;
 }

@@ -17,7 +17,7 @@
         chaceData.content.className = 'ehuanrum-content';
         //界面加载完成后去主动给界面做数据绑定处理
         window.addEventListener('load', function () {
-            var routerUrl = {},active = null, paths = location.hash.replace('#', '').split('/');
+            var routerUrl = {}, active = null, paths = location.hash.replace('#', '').split('/');
             binding(document.body, window);
             //根据对应的router功能构建菜单
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
@@ -42,7 +42,7 @@
                     go.apply(this, arguments);
                 } else if (typeof menu === 'function') {
                     chaceData.content.innerHTML = '';
-                    if(active && active.scope()){
+                    if (active && active.scope()) {
                         active.scope().$destroy();
                     }
                     active = menu.apply(this, Array.prototype.slice.call(arguments, 1));
@@ -343,7 +343,7 @@
     };
 
     //用作双向绑定的功能部分
-    function binding(element, data, parentNode, controller) {
+    function binding(elements, data, parentNode, controller) {
         if (typeof parentNode === 'string') {
             chaceData.content.innerHTML = '';
             location.hash = '#' + parentNode.replace(/\./g, '/')
@@ -352,18 +352,20 @@
             controller = parentNode;
             parentNode = null;
         }
-        if (typeof element === 'string') {
-            element = createElement(element);
-            (parentNode || chaceData.content).appendChild(element);
-        }
-        if (typeof element[0] === 'string' && typeof element[1] === 'object') {
-            Object.keys(element[1]).forEach(function (k) {
-                element[0] = element[0].replace(new RegExp('\\{\\s*' + k + '\\s*\\}', 'g'), element[1][k] || '');
+
+        if (typeof elements[0] === 'string' && typeof elements[1] === 'object') {
+            Object.keys(elements[1]).forEach(function (k) {
+                elements[0] = elements[0].replace(new RegExp('\\{\\s*' + k + '\\s*\\}', 'g'), elements[1][k] || '');
             });
-            element = createElement(element[0]);
-            (parentNode || chaceData.content).appendChild(element);
+            elements = elements[0];
         }
-        if (!element instanceof HTMLElement) {
+        if (typeof elements === 'string') {
+            elements = createElement(elements);
+            elements.forEach(function (element) {
+                (parentNode || chaceData.content).appendChild(element)
+            });
+        }
+        if (!(elements instanceof Array) && !(elements instanceof HTMLElement)) {
             throw new Error('element必须是DOM元素。');
         }
         if (typeof data === 'function') {
@@ -372,12 +374,19 @@
         }
 
         initBindingDefineProperty();
-        initBindingElement();
+
+        if (elements instanceof Array) {
+            elements.forEach(function (element) {
+                initBindingElement(element);
+                extendElement(element, data);
+            });
+        } else {
+            initBindingElement(elements);
+        }
+
+        extendElement(elements, data);
         data.$eval();
-
-        extendElement(element, data);
-
-        return element;
+        return elements;
 
         function _$extend(oldObject, newObject, pros) {
             var fromPros = pros, toPros = pros;
@@ -421,7 +430,7 @@
                 Object.defineProperty(data, '$extend', { value: function (newObject, pros) { return _$extend(data, newObject, pros); } });
 
                 if (controller) {
-                    controller(data, element);
+                    controller(data, elements);
                 }
                 if (data === window) { return; }//不给window添加set/get
                 Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof EventTarget); }).forEach(function (pro) {
@@ -442,12 +451,10 @@
                         }
                     });
                 });
-
-                element.addEventListener('unload', data.$destroy);
             }
         }
 
-        function initBindingElement() {
+        function initBindingElement(element) {
             //把[]关起来的属性设置双向绑定
             var controls = ehuanrum('control');
 
@@ -487,7 +494,24 @@
             element.scope = function () {
                 return data;
             };
+            element.update = function (parnet) {
+                if (element instanceof Array) {
+                    element.forEach(function (el) {
+                        if (parnet) {
+                            parnet.appendChild(el);
+                        } else {
+                            el.parentNode.removeChild(el);
+                        }
+                    });
+                } else {
+                    if (parnet) {
+                        parnet.appendChild(element);
+                    } else {
+                        element.parentNode.removeChild(element);
+                    }
 
+                }
+            };
         }
 
         function $name(name) {
@@ -506,7 +530,7 @@
         function createElement(string) {
             var parent = document.createElement('div');
             parent.innerHTML = string;
-            return parent.children[0];
+            return Array.prototype.slice.call(parent.children, 0);
         }
 
     };
@@ -591,17 +615,15 @@
         //on开头的都被认为是事件
         function events() {
             if (field === 'onload') {
-                if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
-                    $value(data, value).call(data, element)
-                } else {
-                    $value(data, value);
-                }
+                var fn = $value(data, value);
+                if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
+                    fn.call(data, element)
+                } 
             } else {
                 element.addEventListener(field.replace('on', '').trim(), function () {
-                    if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
-                        $value(data, value).apply(data, arguments)
-                    } else {
-                        $value(data, value);
+                    var fn = $value(data, value);
+                    if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
+                        fn.apply(data, arguments)
                     }
                 });
             }
@@ -691,11 +713,14 @@
                     } else {
                         bindElement.scope().$eval();
                     }
-                    if (nextSibling) {
-                        nextSibling.before(bindElement);
-                    } else {
-                        parentNode.appendChild(bindElement);
-                    }
+                    bindElement.forEach(function (el) {
+                        if (nextSibling) {
+                            nextSibling.before(el);
+                        } else {
+                            parentNode.appendChild(el);
+                        }
+                    });
+
                     return { t: item, e: bindElement };
                 });
 

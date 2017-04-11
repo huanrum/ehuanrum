@@ -19,12 +19,12 @@
 (function ($e) {
     'use strict';
 
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length || 0;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.ehr.checkbox',function(){
+        return function(element,data,field){
+            $e('binding')('<input type="checkbox" [checked]="'+field+'">',data,element);
+        }
     });
 
 })(window.$ehr);
@@ -33,11 +33,22 @@
 
     //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
 
-    $e('control.ehr.checkbox',function(){
-        return function(element,data,field){
-            $e('binding')('<input type="checkbox" [checked]="'+field+'">',data,element);
+    $e('control.ehr.file', ['value','binding','common_file',function (value,binding,common_file) {
+        return function (element, data, field) {
+            binding('<input type="file" [onchange]="onchange">', {
+                onchange: function (e) {
+                    if (e.target.files.length > 0) {
+                        var reader = new FileReader();
+                        var file = e.target.files[0];
+                        reader.onload = function () {
+                           value(data,field,common_file(file)(reader.result));
+                        };
+                        reader.readAsText(file,'gb2312');
+                    }
+                }
+            }, element);
         }
-    });
+    }]);
 
 })(window.$ehr);
 (function ($e) {
@@ -93,7 +104,7 @@
                         'cancel':function(){this.$close();}
                     }});
                 }
-            }, [field]);
+            }, ['height',field]);
             Object.defineProperty(newData, 'columns', {
                 configurable: true,
                 enumerable: false,
@@ -111,18 +122,16 @@
             });
 
             binding([
-                '<div >',
                 '   <div class="table-header">',
                 '       <div class="table-row">',
                 '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
                 '       </div>',
                 '   </div>',
-                '   <div class="table-body">',
+                '   <div class="table-body" [style.height]="height">',
                 '       <div [item:items] class="table-row" [ondblclick]="show(item)" [onclick]="select">',
                 '           <div [column:columns] [class]="\'cell-\' + $index" [innerHTML]="item[column]"></div>',
                 '       </div>',
-                '   </div>',
-                '</div>'
+                '   </div>'
             ].join(''), newData, element);
         }
     }]);
@@ -175,13 +184,25 @@
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.dialog',['functions_event',function(functions_event){
         return function(child,data,controller){
             data = data || {};
             var event = functions_event(data);
             data.buttons = data.buttons || {};
             data.$close = function(){
-                dialog.parentNode.removeChild(dialog);
+                dialog.update();
                 data.$destroy();
                 event.fire(data,dialog);
             };
@@ -206,6 +227,57 @@
                 return event.in;
         }
     }]);
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('common.file', function () {
+        var functions = {
+            csv: [csv_read, csv_write]
+        };
+
+
+        return function (file) {
+            switch (file.type) {
+                case 'application/vnd.ms-excel':
+                    return transe('csv');
+                default:
+                    return function (i) { return i; };
+            }
+        };
+
+        function transe(type) {
+            return function (data) {
+                if (typeof data === 'string') {
+                    return functions[type][0](data);
+                } else {
+                    return functions[type][1](data);
+                }
+            }
+        }
+
+        function csv_read(data) {
+            //字符串为解析,否则为构建
+            return data.split(/[\n\b]/).filter(function(i){return !!i.trim();}).map(function (str) {
+                var replaces = /\".*\"/.exec(str) || [];
+                replaces.forEach(function (rep, index) {
+                    str = str.replace(rep, '{{' + index + '}}');
+                });
+                return str.replace(/\r/, '').split(',').map(function (res) {
+                    replaces.forEach(function (rep, index) {
+                        res = res.replace('{{' + index + '}}', rep.slice(1,-1));
+                    });
+                    return res;
+                });
+            });
+        }
+
+        function csv_write() {
+
+        }
+    });
 
 })(window.$ehr);
 (function ($e) {
@@ -433,33 +505,52 @@
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.work.binding', ['common_page','functions',function (common_page,functions) {
+    $e('router.work.binding', ['common_page', 'common_dialog', 'functions', function (common_page, common_dialog, functions) {
 
         return function (name) {
             var binding = common_page([
-               '<div>',
-               '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index">',
-               
-               '    </div>',
-               '    <div [innerHTML]="name|capitalize(index)">',
-               
-               '    </div>',
-               '</div>'
-            ].join(''),{
-                    title:'Binding',
-                    name:name,
-                    index:0,
-                    color:function(){
+                '<div>',
+                '    <br>',
+                '    <div [ehr.file]="csv"></div>',
+                '      <button [onclick]="showCsv(csv)">showCsv</button>',
+                '    <br>',
+                '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
+                '    <div [innerHTML]="name|capitalize(index)"></div>',
+                '</div>'
+            ].join(''), {
+                    title: 'Binding',
+                    name: name,
+                    index: 0,
+                    color: function () {
                         return functions.color(this.index);
                     }
-            },function(scope){
-                var handel = setInterval(function(){
-                    scope.index = Math.floor(Math.random() * 100);
-                },1000);
-                scope.$destroy(function(){
-                    clearInterval(handel);
+                }, function (scope) {
+                    var handel = setInterval(function () {
+                        scope.index = Math.floor(Math.random() * 100);
+                    }, 1000);
+
+                    scope.showCsv = function (array) {
+                        if (array instanceof Array) {
+                            var items = [];
+                            for (var i = 1; i < array.length; i++) {
+                                var item = {};
+                                array[0].forEach(function (f, j) {
+                                    item[f] = array[i][j];
+                                });
+                                items.push(item);
+                            }
+                            common_dialog('<div [my.grid]="items">', { title: '显示读取的文件', height: '30em', items: items });
+                        } else {
+                            common_dialog(array, { title: '显示读取的文件', height: '30em' });
+                        }
+
+                    };
+
+
+                    scope.$destroy(function () {
+                        clearInterval(handel);
+                    });
                 });
-            });
 
             return binding;
         };

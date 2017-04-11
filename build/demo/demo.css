@@ -19,6 +19,9 @@
   color: #ffffff;
   background: #666699; }
 
+.table-body {
+  overflow: auto; }
+
 .table-body .table-row {
   border: 1px solid #d3d3d3; }
 
@@ -89,8 +92,12 @@
 
 .common-dialog-back .common-dialog .common-dialog-content {
   min-height: 6em;
+  max-height: 33em;
   min-width: 8em;
   padding: 1em; }
+
+.common-dialog-back .common-dialog .common-dialog-content > * {
+  height: 100%; }
 
 .common-dialog-back .common-dialog .common-dialog-footer {
   border-top: 1px solid #d3d3d3;
@@ -102,3 +109,30 @@
   margin: 2px 1em;
   padding: 1px;
   cursor: pointer; }
+
+.table-header .table-row > .cell-1, .table-body .table-row > .cell-1 {
+  width: calc(10rem + 1rem); }
+
+.table-header .table-row > .cell-2, .table-body .table-row > .cell-2 {
+  width: calc(10rem + 2rem); }
+
+.table-header .table-row > .cell-3, .table-body .table-row > .cell-3 {
+  width: calc(10rem + 3rem); }
+
+.table-header .table-row > .cell-4, .table-body .table-row > .cell-4 {
+  width: calc(10rem + 4rem); }
+
+.table-header .table-row > .cell-5, .table-body .table-row > .cell-5 {
+  width: calc(10rem + 5rem); }
+
+.table-header .table-row > .cell-6, .table-body .table-row > .cell-6 {
+  width: calc(10rem + 6rem); }
+
+.table-header .table-row > .cell-7, .table-body .table-row > .cell-7 {
+  width: calc(10rem + 7rem); }
+
+.table-header .table-row > .cell-8, .table-body .table-row > .cell-8 {
+  width: calc(10rem + 8rem); }
+
+.table-header .table-row > .cell-9, .table-body .table-row > .cell-9 {
+  width: calc(10rem + 9rem); }
