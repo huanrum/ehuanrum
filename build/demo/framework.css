@@ -19,7 +19,6 @@ body {
       .ehuanrum-menu div span:hover {
         cursor: pointer;
         background: #996689; }
-
-.ehuanrum-content {
-  width: calc(100% - 16em);
-  float: right; }
+  .ehuanrum-menu + .ehuanrum-content {
+    width: calc(100% - 16em);
+    float: right; }

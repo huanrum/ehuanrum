@@ -23,14 +23,19 @@
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
             //如果有对应的main处理逻辑就先运行它
             if (ehuanrum('main')) {
-                ehuanrum('main')(goin);
+                var mainElement = ehuanrum('main')(goin);
+                if(mainElement){
+                    chaceData.content.appendChild(mainElement);
+                }
             } else {
                 goin();
             }
 
             function goin() {
                 //添加菜单和内容显示用的容器,并根据路径初始化界面
-                document.body.appendChild(chaceData.menu);
+                if(ehuanrum('router')){
+                    document.body.appendChild(chaceData.menu);
+                }
                 document.body.appendChild(chaceData.content);
                 go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
             }

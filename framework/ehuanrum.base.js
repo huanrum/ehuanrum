@@ -30,9 +30,14 @@
 
             function goin() {
                 //添加菜单和内容显示用的容器,并根据路径初始化界面
-                document.body.appendChild(chaceData.menu);
-                document.body.appendChild(chaceData.content);
-                go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
+                if (ehuanrum('router')) {
+                    document.body.appendChild(chaceData.menu);
+                    document.body.appendChild(chaceData.content);
+                    go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
+                } else {
+                    document.body.appendChild(chaceData.content);
+                }
+
             }
 
             function go(menu) {
@@ -618,7 +623,7 @@
                 var fn = $value(data, value);
                 if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
                     fn.call(data, element)
-                } 
+                }
             } else {
                 element.addEventListener(field.replace('on', '').trim(), function () {
                     var fn = $value(data, value);
