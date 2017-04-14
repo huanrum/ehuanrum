@@ -664,6 +664,7 @@
             if (field === 'value') {
                 element.addEventListener('keyup', function () {
                     $value(data, value, $value(element, field));
+                    data.$eval();
                 });
             } else {
                 element.addEventListener('click', function () {
@@ -675,6 +676,7 @@
         function foreach(fields) {
             var elements = [], nextSibling = element.nextSibling, parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
             element.parentNode.removeChild(element);
+            descriptor.value = descriptor.value || [];
             Object.defineProperty(data, fields[1], {
                 configurable: true,
                 enumerable: descriptor.enumerable,
@@ -690,7 +692,6 @@
                     render(val);
                 }
             });
-
             render($value(data, fields[1]));
 
             function render(vals) {
