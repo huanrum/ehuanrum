@@ -438,7 +438,7 @@
                     controller(data, elements);
                 }
                 if (data === window) { return; }//不给window添加set/get
-                Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof EventTarget); }).forEach(function (pro) {
+                Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof Node); }).forEach(function (pro) {
                     var oldVal = data[pro], descriptor = __getOwnPropertyDescriptor(data, pro) || {};
                     Object.defineProperty(data, pro, {
                         configurable: true,
@@ -701,7 +701,7 @@
                     }
                 });
                 elements = map(vals, function (item, i) {
-                    var bindElement = (elements.find(function (it) { return it.t === item; }) || {}).e;
+                    var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || {}).e;
                     if (!bindElement) {
                         var da = { $index: i };
                         if (typeof i === 'number') {
@@ -730,7 +730,12 @@
                     }
                     bindElement.forEach(function (el) {
                         if (nextSibling) {
-                            nextSibling.before(el);
+                            if(nextSibling.before){
+                                nextSibling.before(el);
+                            }else if(parentNode.insertBefore){
+                                parentNode.insertBefore(el,nextSibling);
+                            }
+                            
                         } else {
                             parentNode.appendChild(el);
                         }
