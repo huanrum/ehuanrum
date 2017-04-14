@@ -9,13 +9,13 @@
                 '<div class="my-login">',
                 '   <div>',
                 '       <label>UserName</label>',
-                '       <input [value]="userName">',
+                '       <input [value]="username">',
                 '   </div>',
                 '   <div>',
                 '       <label>Password</label>',
                 '       <input [value]="password">',
                 '   </div>',
-                '<div><button [onclick]="'+field+'">Login</button></div>',
+                '<div><button [onclick]="'+field+'(username,password)">Login</button></div>',
                 '</div>',
                 ].join(''),data,element);
         }

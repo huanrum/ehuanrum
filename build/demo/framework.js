@@ -23,21 +23,21 @@
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
             //如果有对应的main处理逻辑就先运行它
             if (ehuanrum('main')) {
-                var mainElement = ehuanrum('main')(goin);
-                if(mainElement){
-                    chaceData.content.appendChild(mainElement);
-                }
+                ehuanrum('main')(goin);
             } else {
                 goin();
             }
 
             function goin() {
                 //添加菜单和内容显示用的容器,并根据路径初始化界面
-                if(ehuanrum('router')){
+                if (ehuanrum('router')) {
                     document.body.appendChild(chaceData.menu);
+                    document.body.appendChild(chaceData.content);
+                    go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
+                } else {
+                    document.body.appendChild(chaceData.content);
                 }
-                document.body.appendChild(chaceData.content);
-                go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
+
             }
 
             function go(menu) {
@@ -620,17 +620,26 @@
         //on开头的都被认为是事件
         function events() {
             if (field === 'onload') {
-                var fn = $value(data, value);
+                var fn = getFn();
                 if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
                     fn.call(data, element)
-                } 
+                }
             } else {
-                element.addEventListener(field.replace('on', '').trim(), function () {
-                    var fn = $value(data, value);
+                element.addEventListener(field.replace('on', '').trim(), function (e) {
+                     var fn = getFn(e);
                     if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
                         fn.apply(data, arguments)
                     }
                 });
+            }
+
+            function getFn(e){
+                data.$event = e || window.event;
+                data.$element = element;
+                var fn = $value(data, value);
+                delete data.$event;
+                delete data.$element;
+                return fn;
             }
         }
 
@@ -770,7 +779,10 @@
                 return '#' + color;
             } else {
                 if (typeof index !== 'number') {
-                    index = $ehr.sToint('' + index);
+                    index = 0;
+                    Array.prototype.forEach.call('' + index, function (i) {
+                         index = index + i.charCodeAt(); 
+                    });
                 }
                 return '#' + new Date(10000).setYear(index).toString(16).slice(-8, -2);
             }

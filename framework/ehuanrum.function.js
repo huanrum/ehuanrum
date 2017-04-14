@@ -16,7 +16,10 @@
                 return '#' + color;
             } else {
                 if (typeof index !== 'number') {
-                    index = $ehr.sToint('' + index);
+                    index = 0;
+                    Array.prototype.forEach.call('' + index, function (i) {
+                         index = index + i.charCodeAt(); 
+                    });
                 }
                 return '#' + new Date(10000).setYear(index).toString(16).slice(-8, -2);
             }

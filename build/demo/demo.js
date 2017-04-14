@@ -167,13 +167,13 @@
                 '<div class="my-login">',
                 '   <div>',
                 '       <label>UserName</label>',
-                '       <input [value]="userName">',
+                '       <input [value]="username">',
                 '   </div>',
                 '   <div>',
                 '       <label>Password</label>',
                 '       <input [value]="password">',
                 '   </div>',
-                '<div><button [onclick]="'+field+'">Login</button></div>',
+                '<div><button [onclick]="'+field+'(username,password)">Login</button></div>',
                 '</div>',
                 ].join(''),data,element);
         }
@@ -390,7 +390,7 @@
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.game.phone', ['common_page',function (common_page) {
+    $e('router.game.phone', ['common_page','common_dialog',function (common_page,common_dialog) {
 
         return function (name) {
             return common_page([
@@ -399,10 +399,10 @@
                 '</div>'
             ].join(''), {
                     title: 'Game Phone',
-                    name: name,
-                    login:function(){
-                        console.log(this.userName,this.password);
-                        $e('common.dialog')(this.userName+' - '+this.password,{title:'Login Message'});
+                    username: name,
+                    login:function(username,password){
+                        console.log(username,password);
+                        common_dialog(username+' - '+password,{title:'Login Message'});
                     }
                 });
         };

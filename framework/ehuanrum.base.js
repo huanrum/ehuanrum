@@ -620,17 +620,26 @@
         //on开头的都被认为是事件
         function events() {
             if (field === 'onload') {
-                var fn = $value(data, value);
+                var fn = getFn();
                 if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
                     fn.call(data, element)
                 }
             } else {
-                element.addEventListener(field.replace('on', '').trim(), function () {
-                    var fn = $value(data, value);
+                element.addEventListener(field.replace('on', '').trim(), function (e) {
+                     var fn = getFn(e);
                     if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
                         fn.apply(data, arguments)
                     }
                 });
+            }
+
+            function getFn(e){
+                data.$event = e || window.event;
+                data.$element = element;
+                var fn = $value(data, value);
+                delete data.$event;
+                delete data.$element;
+                return fn;
             }
         }
 
@@ -655,6 +664,7 @@
             if (field === 'value') {
                 element.addEventListener('keyup', function () {
                     $value(data, value, $value(element, field));
+                    data.$eval();
                 });
             } else {
                 element.addEventListener('click', function () {
@@ -666,6 +676,7 @@
         function foreach(fields) {
             var elements = [], nextSibling = element.nextSibling, parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
             element.parentNode.removeChild(element);
+            descriptor.value = descriptor.value || [];
             Object.defineProperty(data, fields[1], {
                 configurable: true,
                 enumerable: descriptor.enumerable,
@@ -681,7 +692,6 @@
                     render(val);
                 }
             });
-
             render($value(data, fields[1]));
 
             function render(vals) {
