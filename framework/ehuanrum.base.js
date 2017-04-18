@@ -504,7 +504,7 @@
                     element.forEach(function (el) {
                         if (parnet) {
                             parnet.appendChild(el);
-                        } else {
+                        } else if(el.parentNode){
                             el.parentNode.removeChild(el);
                         }
                     });
@@ -569,14 +569,16 @@
             var tempV = $value(data, value.replace(regExp, ''));
             if (value.match(regExp)) {
                 value.match(regExp).forEach(function (filter) {
-                    var filterFn = filter.split('(')[0].replace('|', '').trim();
-                    if (filter.split(/[\(\)]/g)[1]) {
-                        var filterArgs = filter.split(/[\(\)]/g)[1].split(',').map(function (arg) {
-                            return $value(data, arg.trim());
-                        });
-                        tempV = ehuanrum('filter.' + filterFn).apply(ehuanrum('filter'), [tempV].concat(filterArgs));
-                    } else {
-                        tempV = ehuanrum('filter.' + filterFn)(tempV);
+                    var filterFn = ehuanrum('filter.' + filter.split('(')[0].replace('|', '').trim());
+                    if (filterFn) {
+                        if (filter.split(/[\(\)]/g)[1]) {
+                            var filterArgs = filter.split(/[\(\)]/g)[1].split(',').map(function (arg) {
+                                return $value(data, arg.trim());
+                            });
+                            tempV = filterFn.apply(ehuanrum('filter'), [tempV].concat(filterArgs));
+                        } else {
+                            tempV = filterFn(tempV);
+                        }
                     }
                 });
             }
@@ -626,14 +628,14 @@
                 }
             } else {
                 element.addEventListener(field.replace('on', '').trim(), function (e) {
-                     var fn = getFn(e);
+                    var fn = getFn(e);
                     if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
                         fn.apply(data, arguments)
                     }
                 });
             }
 
-            function getFn(e){
+            function getFn(e) {
                 data.$event = e || window.event;
                 data.$element = element;
                 var fn = $value(data, value);
@@ -644,11 +646,11 @@
         }
 
         function property() {
-
-            var descriptor = __getOwnPropertyDescriptor(data, value) || {};
+            var values = value.split('.'), lastValue = values.pop();
+            var descriptor = __getOwnPropertyDescriptor(values.length?$value(data, values.join('.')):data, lastValue) || {};
             data.$eval(function () { $value(element, field, $value(data, value)); });
 
-            Object.defineProperty(data, value, {
+            Object.defineProperty(values.length?$value(data, values.join('.')):data, lastValue, {
                 configurable: true,
                 enumerable: descriptor.enumerable,
                 set: function (val) {
@@ -674,7 +676,7 @@
         }
 
         function foreach(fields) {
-            var elements = [], nextSibling = element.nextSibling, parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, fields[1]);
+            var elements = [], nextSibling = element.nextSibling, parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, value || fields[1]);
             element.parentNode.removeChild(element);
             descriptor.value = descriptor.value || [];
             Object.defineProperty(data, fields[1], {
@@ -692,12 +694,12 @@
                     render(val);
                 }
             });
-            render($value(data, fields[1]));
+            render($value(data, value || fields[1]));
 
             function render(vals) {
                 elements.forEach(function (it) {
                     if (!vals.some(function (i) { return it.t === i; })) {
-                        it.e.parentNode.removeChild(it.e);
+                        it.e.update();
                     }
                 });
                 elements = map(vals, function (item, i) {
@@ -730,12 +732,12 @@
                     }
                     bindElement.forEach(function (el) {
                         if (nextSibling) {
-                            if(nextSibling.before){
+                            if (nextSibling.before) {
                                 nextSibling.before(el);
-                            }else if(parentNode.insertBefore){
-                                parentNode.insertBefore(el,nextSibling);
+                            } else if (parentNode.insertBefore) {
+                                parentNode.insertBefore(el, nextSibling);
                             }
-                            
+
                         } else {
                             parentNode.appendChild(el);
                         }

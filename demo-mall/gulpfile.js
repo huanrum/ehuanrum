@@ -17,8 +17,8 @@ gulp.task('framework_minify_css', function () {
             './../framework/*/*.css','./../framework/*/*.scss'
         ];
 
-    del('./../build/demo/framework.css');
-    del('./../build/demo/framework.min.css');
+    del(buildDirname + '/framework.css');
+    del(buildDirname + '/framework.min.css');
     return gulp.src(cssSrc)      //压缩的文件
         .pipe(sass())
         .pipe(concat('framework.css'))    //合并所有css到all.css
@@ -37,8 +37,8 @@ gulp.task('demo_minify_css', function () {
             './*/*/*/*/*.css','./*/*/*/*/*.scss'
         ];
 
-    del('./../build/demo/demo.css');
-    del('./../build/demo/demo.min.css');
+    del(buildDirname + '/demo.css');
+    del(buildDirname + '/demo.min.css');
     return gulp.src(cssSrc) //压缩的文件
         .pipe(sass())
         .pipe(concat('demo.css'))    //合并所有css到all.css
@@ -54,8 +54,8 @@ gulp.task('framework_minify_js', function() {
             './../framework/*.js','./../framework/*/*.js'
         ];
 
-    del('./../build/demo/framework.js');
-    del('./../build/demo/framework.min.js');
+    del(buildDirname + '/framework.js');
+    del(buildDirname + '/framework.min.js');
     return gulp.src(jsSrc)
         .pipe(concat('framework.js'))    //合并所有js到framework.js
         .pipe(gulp.dest(buildDirname))    //输出framework.js到文件夹
@@ -70,8 +70,8 @@ gulp.task('demo_minify_js', function() {
             './*.js','./*/*.js','./*/*/*.js','./*/*/*/*.js','./*/*/*/*/*.js','!gulpfile.js'//app
         ];
 
-    del('./../build/demo/demo.js');
-    del('./../build/demo/demo.min.js');
+    del(buildDirname + '/demo.js');
+    del(buildDirname + '/demo.min.js');
     return gulp.src(jsSrc)
         .pipe(concat('demo.js'))    //合并所有js到demo.js
         .pipe(gulp.dest(buildDirname))    //输出demo.js到文件夹
@@ -83,7 +83,7 @@ gulp.task('demo_minify_js', function() {
 //复制新的html
 gulp.task('copy_html',function() {
     var version = Date.now();
-    del('./../build/demo/index.html');
+    del(buildDirname + '/index.html');
     return gulp.src('./index.template',{ base: '.' })
         .pipe(rename("index.html"))
         .pipe(replace(/\.css/g, isDebug?'.css':('.min.css?t='+version)))

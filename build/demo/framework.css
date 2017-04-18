@@ -22,3 +22,9 @@ body {
   .ehuanrum-menu + .ehuanrum-content {
     width: calc(100% - 16em);
     float: right; }
+
+.ehuanrum-content .ehuanrum-language {
+  position: fixed;
+  top: 10%;
+  left: 80%;
+  z-index: 999; }
