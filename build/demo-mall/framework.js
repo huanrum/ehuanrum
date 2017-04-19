@@ -263,6 +263,41 @@
         return {};
     }
 
+    //计算表达式需要关注里面的每一个变量
+    function _descriptorFileds(data, expression, fn) {
+        expression.replace(/\'((?!\').)*\'/g, '').split(/[+\-*/%\|\&\(\)=\?\:,!><]/).filter(function (i) { return !!i.trim(); }).forEach(function (fi) {
+            if (/\[.*\]/.test(fi)) {
+                fi.match(/\[[0-9a-zA-Z\.]*\]/g).forEach(function (f) {
+                    fi = fi.replace(f, '.' + $value(data, f.replace(/[\[\]]/g, '')));
+                });
+            }
+
+            var td = data;
+            fi.split('.').forEach(function (f) {
+                de(td, f);
+                td = td[f] || {};
+            });
+        });
+        function de(td, tf) {
+            var descriptor = __getOwnPropertyDescriptor(td, tf);
+            Object.defineProperty(td, tf, {
+                configurable: true,
+                enumerable: descriptor.enumerable,
+                set: function (val) {
+                    if (descriptor.set) {
+                        descriptor.set(val);
+                    } else {
+                        descriptor.value = val;
+                    }
+                    fn();
+                },
+                get: function () {
+                    return descriptor.get && descriptor.get() || descriptor.value;
+                }
+            });
+        }
+    }
+
     //给对象设值或取值，field可以是复杂的路径:a.b.0.a
     function $value($obj, $field, $value) {
         if (!/^[0-9a-zA-Z\._$@]*$/.test($field)) {
@@ -469,7 +504,7 @@
                 return /:/.test(b.name) - /:/.test(a.name);
             }).forEach(function (attr) {
                 if (!/:/.test(attr.name) && $value(controls, attr.name.slice(1, -1))) {
-                    $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.'))(element, data, attr.value);
+                    $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
                 } else {
                     defineProperty(element, data, $name(attr.name.slice(1, -1)), attr.value);
                 }
@@ -504,17 +539,16 @@
                     element.forEach(function (el) {
                         if (parnet) {
                             parnet.appendChild(el);
-                        } else if(el.parentNode){
+                        } else if (el.parentNode) {
                             el.parentNode.removeChild(el);
                         }
                     });
                 } else {
                     if (parnet) {
                         parnet.appendChild(element);
-                    } else {
+                    } else if (element.parentNode) {
                         element.parentNode.removeChild(element);
                     }
-
                 }
             };
         }
@@ -540,6 +574,8 @@
 
     };
 
+
+
     ///defineProperty,实现双向绑定
     function defineProperty(element, data, field, value) {
         if (!element.parentNode) { return; }
@@ -559,7 +595,7 @@
                     property();
                 }
             } else {
-                descriptorFileds(data, value, applyElement);
+                _descriptorFileds(data, value, applyElement);
                 data.$eval(applyElement);
             }
         }
@@ -583,40 +619,6 @@
                 });
             }
             $value(element, field, tempV);
-        }
-
-        function descriptorFileds(data, expression, fn) {
-            expression.replace(/\'((?!\').)*\'/g, '').split(/[+\-*/%\|\&\(\)=\?\:,!]/).filter(function (i) { return !!i.trim(); }).forEach(function (fi) {
-                if (/\[.*\]/.test(fi)) {
-                    fi.match(/\[[0-9a-zA-Z\.]*\]/g).forEach(function (f) {
-                        fi = fi.replace(f, '.' + $value(data, f.replace(/[\[\]]/g, '')));
-                    });
-                }
-
-                var td = data;
-                fi.split('.').forEach(function (f) {
-                    de(td, f);
-                    td = td[f] || {};
-                });
-            });
-            function de(td, tf) {
-                var descriptor = __getOwnPropertyDescriptor(td, tf);
-                Object.defineProperty(td, tf, {
-                    configurable: true,
-                    enumerable: descriptor.enumerable,
-                    set: function (val) {
-                        if (descriptor.set) {
-                            descriptor.set(val);
-                        } else {
-                            descriptor.value = val;
-                        }
-                        fn();
-                    },
-                    get: function () {
-                        return descriptor.get && descriptor.get() || descriptor.value;
-                    }
-                });
-            }
         }
 
         //on开头的都被认为是事件
@@ -647,10 +649,10 @@
 
         function property() {
             var values = value.split('.'), lastValue = values.pop();
-            var descriptor = __getOwnPropertyDescriptor(values.length?$value(data, values.join('.')):data, lastValue) || {};
+            var descriptor = __getOwnPropertyDescriptor(values.length ? $value(data, values.join('.')) : data, lastValue) || {};
             data.$eval(function () { $value(element, field, $value(data, value)); });
 
-            Object.defineProperty(values.length?$value(data, values.join('.')):data, lastValue, {
+            Object.defineProperty(values.length ? $value(data, values.join('.')) : data, lastValue, {
                 configurable: true,
                 enumerable: descriptor.enumerable,
                 set: function (val) {
@@ -677,6 +679,7 @@
 
         function foreach(fields) {
             var elements = [], nextSibling = element.nextSibling, parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, value || fields[1]);
+            var outerHTML = element.outerHTML.replace('[' + field + ']=""', '');
             element.parentNode.removeChild(element);
             descriptor.value = descriptor.value || [];
             Object.defineProperty(data, fields[1], {
@@ -725,7 +728,7 @@
                             }
                         });
                         da.__proto__ = data;
-                        bindElement = binding(element.outerHTML.replace('[' + field + ']=""', ''), da);
+                        bindElement = binding(outerHTML, da);
                         data.$eval(da.$eval);
                     } else {
                         bindElement.scope().$eval();

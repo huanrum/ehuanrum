@@ -20,7 +20,7 @@ $ehr('login',['global','binding',function(global,binding){
                     username:username,
                     login:function(username,password){
                         global.update({user:username},{user:username});
-                        loginElement.parentNode.removeChild(loginElement);
+                        loginElement.update();
                         goin();
                     }
                 },document.body);
