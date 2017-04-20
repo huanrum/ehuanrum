@@ -278,6 +278,10 @@
                 td = td[f] || {};
             });
         });
+        setTimeout(function () {
+            fn();
+        }, 500);
+
         function de(td, tf) {
             var descriptor = __getOwnPropertyDescriptor(td, tf);
             Object.defineProperty(td, tf, {
@@ -414,17 +418,17 @@
         }
 
         initBindingDefineProperty();
-
+        //先扩展element保证后面initBindingElement里面可用
+        extendElement(elements, data);
         if (elements instanceof Array) {
             elements.forEach(function (element) {
-                initBindingElement(element);
                 extendElement(element, data);
+                initBindingElement(element);
             });
         } else {
             initBindingElement(elements);
         }
 
-        extendElement(elements, data);
         data.$eval();
         return elements;
 
@@ -503,12 +507,11 @@
             }).sort(function (a, b) {
                 return /:/.test(b.name) - /:/.test(a.name);
             }).forEach(function (attr) {
-                if (!/:/.test(attr.name) && $value(controls, attr.name.slice(1, -1))) {
+                if (!/:/.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
                     $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
                 } else {
                     defineProperty(element, data, $name(attr.name.slice(1, -1)), attr.value);
                 }
-
                 if (!chaceData.binding) {
                     element.removeAttribute(attr.name);
                 }
@@ -534,23 +537,31 @@
             element.scope = function () {
                 return data;
             };
-            element.update = function (parnet) {
+            element.update = function (parent, next) {
                 if (element instanceof Array) {
                     element.forEach(function (el) {
-                        if (parnet) {
-                            parnet.appendChild(el);
-                        } else if (el.parentNode) {
-                            el.parentNode.removeChild(el);
-                        }
+                        update(el, parent, next);
                     });
                 } else {
-                    if (parnet) {
-                        parnet.appendChild(element);
-                    } else if (element.parentNode) {
-                        element.parentNode.removeChild(element);
-                    }
+                    update(element, parent, next)
                 }
             };
+
+            function update(el, parent, next) {
+                if (parent) {
+                    if (next) {
+                        if (next.before) {
+                            next.before(el);
+                        } else if (parent.insertBefore) {
+                            parent.insertBefore(el, next);
+                        }
+                    } else {
+                        parent.appendChild(el);
+                    }
+                } else if (el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+            }
         }
 
         function $name(name) {
@@ -582,7 +593,7 @@
         //关联的element属性名以on开头的都是事件
         if (/^\s*on/.test(field)) {
             events();
-            //以a:b这种结构的是循环此时的value是无意义的
+            //以a:b这种结构的是循环此时的其他的绑定暂时不需要了
         } else if (/\S+:\S+/.test(field)) {
             foreach(field.split(':'));
             //其他的都是element的普通属性
@@ -679,7 +690,7 @@
 
         function foreach(fields) {
             var elements = [], nextSibling = element.nextSibling, parentNode = element.parentNode, descriptor = __getOwnPropertyDescriptor(data, value || fields[1]);
-            var outerHTML = element.outerHTML.replace('[' + field + ']=""', '');
+            var outerHTML = element.outerHTML.replace('[' + field + ']="' + value + '"', '');
             element.parentNode.removeChild(element);
             descriptor.value = descriptor.value || [];
             Object.defineProperty(data, fields[1], {
@@ -733,18 +744,7 @@
                     } else {
                         bindElement.scope().$eval();
                     }
-                    bindElement.forEach(function (el) {
-                        if (nextSibling) {
-                            if (nextSibling.before) {
-                                nextSibling.before(el);
-                            } else if (parentNode.insertBefore) {
-                                parentNode.insertBefore(el, nextSibling);
-                            }
-
-                        } else {
-                            parentNode.appendChild(el);
-                        }
-                    });
+                    bindElement.update(parentNode,nextSibling);
 
                     return { t: item, e: bindElement };
                 });
