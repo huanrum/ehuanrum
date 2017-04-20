@@ -105,6 +105,18 @@ $ehr('main',['global',function(global){
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.dialog',function(){
         return function(child,data){
             data = data || {};
@@ -222,42 +234,6 @@ $ehr('main',['global',function(global){
     });
 
 })(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
-
-$ehr('personal', ['binding', function (binding) {
-
-    var template = [
-        '<div>',
-        '   <div [innerHTML]="title"></div>',
-        '   <div [value:item]>',
-        '       <label [innerHTML]="$index"></label>',
-        '       <div [innerHTML]="value"></div>',
-        '   </div>',
-        '</div>'
-    ].join('');
-
-    return function (user) {
-        binding(template, function (scope) {
-            scope.title = '个人信息';
-            scope.item = {
-                name: user,
-                email: 'huanrum@126.com'
-            };
-        }, 'personal');
-    };
-
-}]);
 
 $ehr('router.home',['common_page',function(common_page){
 
@@ -282,6 +258,30 @@ $ehr('router.home',['common_page',function(common_page){
             ].join('<br>');
             data.contact = 'email: <i>huanrum@126.com</i>';
         });
+    };
+
+}]);
+
+$ehr('personal', ['binding', function (binding) {
+
+    var template = [
+        '<div>',
+        '   <div [innerHTML]="title"></div>',
+        '   <div [value:item]>',
+        '       <label [innerHTML]="$index"></label>',
+        '       <div [innerHTML]="value"></div>',
+        '   </div>',
+        '</div>'
+    ].join('');
+
+    return function (user) {
+        binding(template, function (scope) {
+            scope.title = '个人信息';
+            scope.item = {
+                name: user,
+                email: 'huanrum@126.com'
+            };
+        }, 'personal');
     };
 
 }]);

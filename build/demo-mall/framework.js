@@ -670,10 +670,12 @@
                     $value(element, field, val);
                     if (descriptor.set) {
                         descriptor.set(val);
+                    }else if(descriptor.writable){
+                         descriptor.value = val;
                     }
                 },
                 get: function () {
-                    return (field === 'value' && element.value) || (descriptor.get && descriptor.get());
+                    return (field === 'value' && element.value) || (descriptor.get && descriptor.get()) || descriptor.value;
                 }
             });
             if (field === 'value') {
