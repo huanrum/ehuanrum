@@ -96,7 +96,7 @@
   min-width: 8em;
   padding: 1em; }
 
-.common-dialog-back .common-dialog .common-dialog-content > * {
+.common-dialog-back .common-dialog .common-dialog-content > *:not(iframe) {
   height: 100%; }
 
 .common-dialog-back .common-dialog .common-dialog-footer {

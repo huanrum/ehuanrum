@@ -2,7 +2,7 @@
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('common.dialog',['functions_event',function(functions_event){
+    $e('common.dialog',['functions_event','common_drag',function(functions_event,common_drag){
         return function(child,data,controller){
             data = data || {};
             var event = functions_event(data);
@@ -30,6 +30,8 @@
                 '   </div>',
                 ' </div>'
                 ].join(''),data,document.body,controller);
+
+                common_drag([dialog[0].getElementsByClassName('common-dialog')[0], dialog[0].getElementsByClassName('common-dialog-header')[0]]);
                 return event.in;
         }
     }]);

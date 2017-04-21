@@ -63,6 +63,22 @@
     });
 
 })(window.$ehr);
+
+window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_drag) {
+
+    return function (element, data, field) {
+        setTimeout(function () {
+            element.parentNode.style.position = 'relative';
+            element.style.position = 'absolute';
+            element.style.left = element.offsetLeft + 'px';
+            element.style.top = element.offsetTop + 'px';
+        }, 500);
+
+        common_drag(element, function () {
+            return value(data, field);
+        });
+    };
+}]);
 (function ($e) {
     'use strict';
 
@@ -184,19 +200,7 @@
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length || 0;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('common.dialog',['functions_event',function(functions_event){
+    $e('common.dialog',['functions_event','common_drag',function(functions_event,common_drag){
         return function(child,data,controller){
             data = data || {};
             var event = functions_event(data);
@@ -224,11 +228,99 @@
                 '   </div>',
                 ' </div>'
                 ].join(''),data,document.body,controller);
+
+                common_drag([dialog[0].getElementsByClassName('common-dialog')[0], dialog[0].getElementsByClassName('common-dialog-header')[0]]);
                 return event.in;
         }
     }]);
 
 })(window.$ehr);
+
+window.$ehr('common.drag', [function () {
+    return function drag(element, toParent) {
+        var temp = {}, dragElement = element,canDrag = function(){return true;};
+        if (element instanceof Array) {
+            dragElement = element[1];
+            element = element[0];
+        }
+        if (typeof toParent === 'function') {
+            canDrag = toParent;
+            toParent = null;
+        }
+
+        dragElement.addEventListener('mousedown', function (e) {
+            var style = window.getComputedStyle(element);
+            if (e.clientX < (parseInt(style.left) || 0) + (parseInt(style.width) || 0) - 15 ||
+                e.clientY < (parseInt(style.top) || 0) + (parseInt(style.height) || 0) - 15) {
+                mousedown(e);
+            }
+        });
+
+        window.addEventListener('mouseup', function () {
+            temp.e = null;
+            element.style.cursor = 'default';
+            Array.prototype.forEach.call(element.children, function (child) {
+                child.style.cursor = element.style.cursor;
+            });
+            window.removeEventListener('mousemove', mousemove);
+            if (toParent && toParent !== element.parentNode) {
+                toParent.appendChild(element);
+            }
+            if (element.recycle && element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+        });
+
+        return function (e, recycle) {
+            element.style.position = 'fixed';
+            element.style.left =  e.clientX - 10 + 'px';
+            element.style.top = e.clientY - 10 + 'px';
+            mousedown(e);
+            if (recycle) {
+                window.addEventListener('mousemove', recycleOverlap);
+            }
+            function recycleOverlap() {
+                if (!element.parentNode) {
+                    window.removeEventListener('mousemove', recycleOverlap);
+                }
+                if(!temp.e){return;}
+                element.recycle = overlap(element, recycle);
+                element.style.cursor = element.recycle ? 'url(resource/delete.ico),move' : 'default';
+                Array.prototype.forEach.call(element.children, function (child) {
+                    child.style.cursor = element.style.cursor;
+                });
+            }
+        };
+
+        function overlap(element, recycle) {
+            var containerRect = recycle.getBoundingClientRect();
+            var selfRect = element.getBoundingClientRect();
+            return !(beyond(containerRect.left, containerRect.right, selfRect.left) ||
+                beyond(containerRect.left, containerRect.right, selfRect.right) ||
+                beyond(containerRect.top, containerRect.bottom, selfRect.top) ||
+                beyond(containerRect.top, containerRect.bottom, selfRect.bottom));
+
+            function beyond(a, b, num) {
+                return num < Math.min(a, b) || num > Math.max(a, b);
+            }
+        }
+
+        function mousedown(e) {
+            var style = window.getComputedStyle(element);
+            temp.e = e;
+            temp.x = e.clientX - (parseInt(style.left) || 0);
+            temp.y = e.clientY - (parseInt(style.top) || 0);
+            element.style.cursor = 'move';
+            window.addEventListener('mousemove', mousemove);
+        }
+        function mousemove(e) {
+            if(canDrag(e)){
+                element.style.left = e.clientX - temp.x + 'px';
+                element.style.top = e.clientY - temp.y + 'px';
+            }
+        }
+    };
+}]);
 (function ($e) {
     'use strict';
 
@@ -339,6 +431,18 @@
                     
                }
            }
+        };
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
         };
     });
 

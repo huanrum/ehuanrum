@@ -4,7 +4,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
         typeof define === 'function' && define.amd ? define(factory) :
-            (global.$ehr = factory());
+            (global.ehr = global.$ehr = factory());
 })(this, (function (_eval) {
     'use strict';
 
