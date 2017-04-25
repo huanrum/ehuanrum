@@ -34,3 +34,24 @@
 .table-body .table-row>*:hover{
     background: #99f399;
 }
+
+/*my-form*/
+.form-body .form-row{
+    padding: 0.5em 0;
+}
+.form-body .form-row>*{
+    display: inline-block;
+    width:100%;
+}
+
+
+/*my-label-value*/
+.label-value label{
+    display: inline-block;
+    width: 30%;
+    font-weight: bold;
+}
+.label-value div{
+    display: inline-block;
+    width: calc(70% - 2em);
+}

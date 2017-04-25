@@ -7,7 +7,7 @@
             data = data || {};
             data.buttons = data.buttons || [];
             data.$close = function(){
-                dialog.parentNode.removeChild(dialog);
+                dialog.update();
             };
             var dialog = $e('binding')([
                 ' <div class="common-dialog-back">',

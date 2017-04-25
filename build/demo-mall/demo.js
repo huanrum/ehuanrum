@@ -2,6 +2,7 @@
 
 $ehr('global',function(){
     return {
+        service:'http://192.168.1.248:8888/mall',
         update:function(data,user){
             var self = this;
             Object.keys(data||{}).forEach(function(k){
@@ -14,6 +15,41 @@ $ehr('global',function(){
         user:localStorage['ehuanrum_user']
     }
 });
+$ehr('http', ['global',function (global) {
+    return function (url, parms) {
+        var fullUrl = initParms(url, parms);
+        return new Promise(function (resolve, reject) {
+            if(!fullUrl){
+                reject({message:'参数不完整'});
+            }
+            fetch(global.service + fullUrl).then(function (response) {
+                return response.json();
+            },function(err){
+                reject(err);
+            }).then(function (json) {
+                resolve(json);
+            });
+        });
+    };
+
+
+    function initParms(url,parms) {
+        var parmsStr = Object.keys(parms).sort(function (a, b) {
+                return /:/.test(b.name) - /:/.test(a.name);
+            }).map(function(key){
+            if(url.indexOf(':'+key) !== -1){
+                url = url.replace(':' + key,JSON.parse(parms[key]));
+            }else{
+                return key + '=' + JSON.parse(parms[key]);
+            }
+        }).filter(function(i){return !!i;}).join('&');
+
+        if(url.indexOf(':') === -1){
+            return url + (parmsStr?('?'+parmsStr):'')
+        }
+    }
+
+}]);
 
 $ehr('login',['global','binding',function(global,binding){
     var template = [
@@ -54,6 +90,25 @@ $ehr('main',['global',function(global){
     };
 
 }]);
+window.$ehr('control.my.form', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
+        return function (element, data, field) {
+            var newData = data.$extend({}, [field]);
+            Object.defineProperty(newData, 'fields', {
+                configurable: true,
+                enumerable: false,
+                get: function () {
+                    return  Object.keys(value(data, field));
+                }
+            });
+
+            binding([
+                '   <div class="form-body">',
+                '       <div [field:fields] class="form-row" [my.label.value]="'+field+':field">',
+                '       </div>',
+                '   </div>',
+            ].join(''), newData, element);
+        }
+    }]);
 (function ($e) {
     'use strict';
 
@@ -61,24 +116,31 @@ $ehr('main',['global',function(global){
 
     $e('control.my.grid', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
         return function (element, data, field) {
-            var newData = data.$extend({
+            var oldColumns = [] ,newData = data.$extend({
                 select: data.select,
                 show: function (item) {
-                    common_dialog(JSON.stringify(item), {});
+                    common_dialog('<div [my.form]="item" style="width:20em;"></div>', {title:'展示一条数据',item:item,buttons:{
+                        'ok':function(){common_dialog('提交数据')(this.$close);},
+                        'cancel':function(){this.$close();}
+                    }});
                 }
             }, [field]);
             Object.defineProperty(newData, 'columns', {
                 configurable: true,
                 enumerable: false,
+                set:function(v){oldColumns = v;},
                 get: function () {
                     var columns = [];
-                    value(data, field).forEach(function (it) {
+                    (value(data, field)||[]).forEach(function (it) {
                         Object.keys(it).forEach(function (k) {
                             if (columns.indexOf(k) === -1) {
                                 columns.push(k);
                             }
                         });
                     });
+                    if(Object.keys(oldColumns).join() !== Object.keys(columns).join()){
+                        newData.columns = columns;
+                    }
                     return columns;
                 }
             });
@@ -87,7 +149,7 @@ $ehr('main',['global',function(global){
                 '<div >',
                 '   <div class="table-header">',
                 '       <div class="table-row">',
-                '           <div [column:columns] [innerHTML]="column" [class]="\'cell-\' + $index"></div>',
+                '           <div [column:columns] [innerHTML]="\'\'+column" [class]="\'cell-\' + $index"></div>',
                 '       </div>',
                 '   </div>',
                 '   <div class="table-body">',
@@ -101,6 +163,18 @@ $ehr('main',['global',function(global){
     }]);
 
 })(window.$ehr);
+window.$ehr('control.my.label.value', ['binding', function (binding) {
+        return function (element, data, field) {
+            var newData = data.$extend({}, field.split(':'));
+
+            binding([
+                '   <div class="label-value">',
+                '       <label [innerHTML]="field"></label>',
+                '       <div [innerHTML]="item[field]"></div>',
+                '   </div>',
+            ].join(''), newData, element);
+        }
+    }]);
 (function ($e) {
     'use strict';
 
@@ -122,7 +196,7 @@ $ehr('main',['global',function(global){
             data = data || {};
             data.buttons = data.buttons || [];
             data.$close = function(){
-                dialog.parentNode.removeChild(dialog);
+                dialog.update();
             };
             var dialog = $e('binding')([
                 ' <div class="common-dialog-back">',
@@ -159,7 +233,7 @@ $ehr('main',['global',function(global){
             '           {title} ',
             '        </div>',
             '        <div class="right" [onclick]="personal">',
-                        global.user,
+            global.user,
             '        </div>',
             '   </div>',
             '   <div class="content-content">',
@@ -176,21 +250,35 @@ $ehr('main',['global',function(global){
                 controller = data;
                 data = {};
             }
-            if (controller) {
+            if (typeof controller === 'function') {
                 controller(data);
             }
-            Object.keys(data).forEach(function (k) {
-                child = child.replace(new RegExp('\\{\\s*' + k + '\\s*\\}', 'g'), data[k] || '');
-            });
+            if (typeof child === 'string') {
+                Object.keys(data).forEach(function (k) {
+                    child = child.replace(new RegExp('\\{\\s*' + k + '\\s*\\}', 'g'), data[k] || '');
+                });
+            } else if(controller.update){
+                var dataService = controller;
+                controller = null;
+                child = '<div [my.grid]="items"></div>';
+                dataService.update(function (list,page) {
+                    data.items = list;
+                    data.page = data.page || {};
+                    Object.keys(page||{}).forEach(function(k){
+                         data.page[k] = page[k];
+                    });
+                });
+            }
 
-            data.personal = function(){
+
+            data.personal = function () {
                 $ehr('personal')(global.user);
             };
             return binding([template, {
                 title: data.title || 'no title',
                 content: child,
                 footer: data.footer
-            }], data,controller);
+            }], data, controller);
         }
     }]);
 
@@ -199,41 +287,68 @@ $ehr('main',['global',function(global){
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('common.service',function(){
+    $e('common.service', ['http','functions.event', function (http,functions_event) {
 
-        function getData(columns,count){
-            var list = [];
-            for(var i=0;i<count;i++){
-                var item = {};
-                columns.forEach(function(column){
-                    item[column.trim()] = Math.random();
-                });
-                list.push(item);
-            }
-            return list;
-        }
-
-        return function(option){
-            var tempData = {};
-           return {
-               load:function(){
-                    tempData.list = getData(option.fields,Math.floor(Math.random() * 10 + 5));
-               },
-               get:function(){
-                   return tempData.list;
-               },
-               select:function(item){
-                   if(item){
+        return function (option) {
+            var tempData = {}, updateEvent = functions_event();
+            var page = { pageNumber: 1, pageSize: 20 };
+            var service = {
+                update: function(fn){
+                    updateEvent.in(fn);
+                    if(tempData.list){
+                        fn(tempData.list,page);
+                    }
+                },
+                get: function (filter) {
+                    if (filter) {
+                        http(option.url, filter).then(function (req) {
+                            tempData.list = req.data.list;
+                            updateEvent.fire(tempData.list,page);
+                        });
+                    }
+                    return tempData.list;
+                },
+                select: function (item) {
+                    if (item) {
                         tempData.select = item;
-                   }
-                   return tempData.select;
-                    
-               }
-           }
+                    }
+                    return tempData.select;
+                }
+            };
+            service.get(page);
+            return service;
         };
-    });
+    }]);
 
 })(window.$ehr);
+
+$ehr('router.book.math',['common_page','book_math_service',function(common_page,data_service){
+
+    return function(){
+         return common_page(null,{title : 'Math'},data_service);
+    };
+
+}]);
+
+$ehr('book.math.service',['common_service',function(common_service){
+
+    return common_service({url:'/book/math'});
+
+}]);
+
+$ehr('router.book.story',['common_page','book_story_service',function(common_page,data_service){
+
+    return function(){
+        return common_page(null,{title : 'Story'},data_service);
+    };
+
+}]);
+
+$ehr('book.story.service',['common_service',function(common_service){
+
+    return common_service({url:'/book/story'});
+
+}]);
 
 $ehr('router.home',['common_page',function(common_page){
 

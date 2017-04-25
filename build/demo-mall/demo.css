@@ -49,18 +49,29 @@
 .table-body .table-row > *:hover {
   background: #99f399; }
 
+/*my-form*/
+.form-body .form-row {
+  padding: 0.5em 0; }
+
+.form-body .form-row > * {
+  display: inline-block;
+  width: 100%; }
+
+/*my-label-value*/
+.label-value label {
+  display: inline-block;
+  width: 30%;
+  font-weight: bold; }
+
+.label-value div {
+  display: inline-block;
+  width: calc(70% - 2em); }
+
 /*page*/
 .ehuanrum-content .content-header {
   height: 2em;
   padding: 1em;
   background: #d3d3d3; }
-
-.ehuanrum-content .content-header .left {
-  float: left; }
-
-.ehuanrum-content .content-header .right {
-  float: right;
-  cursor: pointer; }
 
 .ehuanrum-content .content-content {
   padding: 1em; }
@@ -94,7 +105,24 @@
 
 .common-dialog-back .common-dialog .common-dialog-content {
   min-height: 6em;
-  min-width: 8em; }
+  max-height: 33em;
+  min-width: 8em;
+  padding: 1em; }
+
+.common-dialog-back .common-dialog .common-dialog-content > *:not(iframe) {
+  height: 100%; }
 
 .common-dialog-back .common-dialog .common-dialog-footer {
-  border-top: 1px solid #d3d3d3; }
+  border-top: 1px solid #d3d3d3;
+  text-align: center;
+  padding: 2px; }
+
+.common-dialog-back .common-dialog .common-dialog-footer a {
+  border: 1px solid #666699;
+  margin: 2px 1em;
+  padding: 1px;
+  cursor: pointer; }
+
+.common-dialog-back .common-dialog .common-dialog-footer a:hover {
+  opacity: 0.8;
+  color: #f3f3f3; }

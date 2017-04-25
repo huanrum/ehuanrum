@@ -51,6 +51,8 @@
                         active.scope().$destroy();
                     }
                     active = menu.apply(this, Array.prototype.slice.call(arguments, 1));
+                }else{
+                    chaceData.content.innerHTML = '<div style="position: absolute;top:10em;left:50%;">没有对应的页面,请确认输入的地址！</div>';
                 }
             }
         });
