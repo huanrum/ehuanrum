@@ -2,7 +2,7 @@
 
 $ehr('global',function(){
     return {
-        service:'http://192.168.1.152:8888/mall',
+        service:'http://192.168.1.248:8888/mall',
         update:function(data,user){
             var self = this;
             Object.keys(data||{}).forEach(function(k){
@@ -379,6 +379,30 @@ $ehr('book.story.service',['common_service',function(common_service){
 
 }]);
 
+$ehr('personal', ['binding', function (binding) {
+
+    var template = [
+        '<div>',
+        '   <div [innerHTML]="title"></div>',
+        '   <div [value:item]>',
+        '       <label [innerHTML]="$index"></label>',
+        '       <div [innerHTML]="value"></div>',
+        '   </div>',
+        '</div>'
+    ].join('');
+
+    return function (user) {
+        binding(template, function (scope) {
+            scope.title = '个人信息';
+            scope.item = {
+                name: user,
+                email: 'huanrum@126.com'
+            };
+        }, 'personal');
+    };
+
+}]);
+
 $ehr('router.home',['common_page',function(common_page){
 
     var template = [
@@ -402,30 +426,6 @@ $ehr('router.home',['common_page',function(common_page){
             ].join('<br>');
             data.contact = 'email: <i>huanrum@126.com</i>';
         });
-    };
-
-}]);
-
-$ehr('personal', ['binding', function (binding) {
-
-    var template = [
-        '<div>',
-        '   <div [innerHTML]="title"></div>',
-        '   <div [value:item]>',
-        '       <label [innerHTML]="$index"></label>',
-        '       <div [innerHTML]="value"></div>',
-        '   </div>',
-        '</div>'
-    ].join('');
-
-    return function (user) {
-        binding(template, function (scope) {
-            scope.title = '个人信息';
-            scope.item = {
-                name: user,
-                email: 'huanrum@126.com'
-            };
-        }, 'personal');
     };
 
 }]);
