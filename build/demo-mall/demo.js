@@ -325,14 +325,14 @@ $ehr('filter.lookup', ['http', function (http) {
     };
 }]);
 
-$ehr('common.dialog', function () {
+$ehr('common.dialog', ['binding',function (binding) {
     return function (child, data) {
         data = data || {};
         data.buttons = data.buttons || [];
         data.$close = function () {
             dialog.update();
         };
-        var dialog = $e('binding')([
+        var dialog = binding([
             ' <div class="common-dialog-back">',
             '   <div class="common-dialog" [style.background]="background">',
             '       <div class="common-dialog-header">',
@@ -383,7 +383,7 @@ $ehr('common.dialog', function () {
             element.style.top = e.clientY - temp.y + 'px';
         }
     }
-});
+}]);
 
 $ehr('common.page', ['global', 'binding', function (global, binding) {
 
@@ -484,6 +484,33 @@ $ehr('common.service', ['http', 'functions.event', function (http, functions_eve
     };
 }]);
 
+$ehr('router.home',['common_page',function(common_page){
+
+    var template = [
+        '<div>{brief}</div>',
+        '<br>',
+        '<div>{info}</div>',
+        '<br>',
+        '<hr>',
+        '<div>{contact}</div>'
+    ].join('');
+
+    return function(){
+        return common_page(template,{title : 'Home'},function(data){
+            data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
+            data.info = [
+                '此项目中主要包含两个分块：商品展示和商品管理。',
+                '   商品展示：用户可以浏览所有商品，都可以点击购买，加入购物车，查看相信信息等等。',
+                '   商品管理：商场管理人员查看销售情况以及库存信息，分析商品的销售趋势，以便于后期的囤货。',
+                '   ',
+                '   '
+            ].join('<br>');
+            data.contact = 'email: <i>huanrum@126.com</i>';
+        });
+    };
+
+}]);
+
 $ehr('router.book.math',['common_page','book_math_service',function(common_page,data_service){
 
     return function(){
@@ -509,33 +536,6 @@ $ehr('router.book.story',['common_page','book_story_service',function(common_pag
 $ehr('book.story.service',['common_service',function(common_service){
 
     return common_service({url:'/book/story'});
-
-}]);
-
-$ehr('router.home',['common_page',function(common_page){
-
-    var template = [
-        '<div>{brief}</div>',
-        '<br>',
-        '<div>{info}</div>',
-        '<br>',
-        '<hr>',
-        '<div>{contact}</div>'
-    ].join('');
-
-    return function(){
-        return common_page(template,{title : 'Home'},function(data){
-            data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
-            data.info = [
-                '此项目中主要包含两个分块：商品展示和商品管理。',
-                '   商品展示：用户可以浏览所有商品，都可以点击购买，加入购物车，查看相信信息等等。',
-                '   商品管理：商场管理人员查看销售情况以及库存信息，分析商品的销售趋势，以便于后期的囤货。',
-                '   ',
-                '   '
-            ].join('<br>');
-            data.contact = 'email: <i>huanrum@126.com</i>';
-        });
-    };
 
 }]);
 

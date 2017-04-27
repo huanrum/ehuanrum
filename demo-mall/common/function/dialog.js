@@ -1,12 +1,12 @@
 
-$ehr('common.dialog', function () {
+$ehr('common.dialog', ['binding',function (binding) {
     return function (child, data) {
         data = data || {};
         data.buttons = data.buttons || [];
         data.$close = function () {
             dialog.update();
         };
-        var dialog = $e('binding')([
+        var dialog = binding([
             ' <div class="common-dialog-back">',
             '   <div class="common-dialog" [style.background]="background">',
             '       <div class="common-dialog-header">',
@@ -57,4 +57,4 @@ $ehr('common.dialog', function () {
             element.style.top = e.clientY - temp.y + 'px';
         }
     }
-});
+}]);
