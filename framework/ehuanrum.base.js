@@ -51,7 +51,7 @@
                         active.scope().$destroy();
                     }
                     active = menu.apply(this, Array.prototype.slice.call(arguments, 1));
-                }else{
+                }else if(!menu){
                     chaceData.content.innerHTML = '<div style="position: absolute;top:10em;left:50%;">没有对应的页面,请确认输入的地址！</div>';
                 }
             }
@@ -262,7 +262,7 @@
                 }
             }
         }
-        return {};
+        return {enumerable:true};
     }
 
     //计算表达式需要关注里面的每一个变量
@@ -662,7 +662,7 @@
 
         function property() {
             var values = value.split('.'), lastValue = values.pop();
-            var descriptor = __getOwnPropertyDescriptor(values.length ? $value(data, values.join('.')) : data, lastValue) || {};
+            var descriptor = __getOwnPropertyDescriptor(values.length ? $value(data, values.join('.')) : data, lastValue);
             data.$eval(function () { $value(element, field, $value(data, value)); });
 
             Object.defineProperty(values.length ? $value(data, values.join('.')) : data, lastValue, {
@@ -686,8 +686,11 @@
                     data.$eval();
                 });
             } else {
-                element.addEventListener('click', function () {
-                    $value(data, value, $value(element, field));
+                element.addEventListener('click', function (e) {
+                    if(['INPUT','SELECT','TEXTAREA'].indexOf(e.target.nodeName) === -1){
+                        $value(data, value, $value(element, field));
+                    }
+                    e.target.focus();
                 });
             }
         }
@@ -720,7 +723,7 @@
                         it.e.update();
                     }
                 });
-                elements = map(vals, function (item, i) {
+                elements = map(vals||[], function (item, i) {
                     var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || {}).e;
                     if (!bindElement) {
                         var da = { $index: i };
@@ -728,7 +731,7 @@
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
                                 get: function () {
-                                    return map($value(data, fields[1]), function (x) { return '' + x; }).indexOf('' + item);
+                                    return map($value(data, fields[1])||[], function (x) { return '' + x; }).indexOf('' + item);
                                 }
                             });
                         }

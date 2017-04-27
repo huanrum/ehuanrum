@@ -1,6 +1,6 @@
 $ehr('http', ['global', 'binding', function (global, binding) {
     return function (url, parms) {
-        var fullUrl = initParms(url, parms);
+        var fullUrl = initParms(url, parms || {});
 
         var loading = binding([
             '<div class="common-dialog-back">',

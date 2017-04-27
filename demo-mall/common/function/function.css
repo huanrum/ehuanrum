@@ -28,9 +28,9 @@
     background:#f3f3f3;
 }
 .common-dialog-back .common-dialog .common-dialog-header{
-    height: 2em;
+    height: 1.5em;
     background: #666699;
-    padding: 0.5em;
+    padding: 0.3em;
 }
 .common-dialog-back .common-dialog .common-dialog-header a{
     float: right;
