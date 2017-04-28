@@ -10,10 +10,10 @@ body {
 .right {
   float: right; }
 
-text-left {
+.text-left {
   text-align: left; }
 
-text-right {
+.text-right {
   text-align: right; }
 
 .inline-block {

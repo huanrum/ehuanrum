@@ -1,5 +1,5 @@
 
-$ehr('personal', ['binding', 'common_dialog', function (binding, common_dialog) {
+$ehr('personal', ['binding', 'global','common_dialog', function (binding, $global,common_dialog) {
 
     var clientId = Date.now(), template = [
         '<div>',
@@ -31,12 +31,9 @@ $ehr('personal', ['binding', 'common_dialog', function (binding, common_dialog) 
     function connection(item) {
         var scope = { title: 'connection', friends: [], messageDialog: messageDialog };
 
-        var ws = new WebSocket("ws://localhost:8181");
+        var ws = new WebSocket($global.websocket);
         ws.onopen = function (e) {
-            ws.send(JSON.stringify({
-                action: 'login',
-                data: item.id
-            }));
+            ws.send(JSON.stringify({action: 'login',data: item.id}));
         };
         ws.onmessage = function (e) {
             var dataMessage = JSON.parse(e.data);
@@ -71,14 +68,11 @@ $ehr('personal', ['binding', 'common_dialog', function (binding, common_dialog) 
         ].join(''), scope);
 
         scope.$destroy(function () {
-            ws.send(JSON.stringify({
-                action: 'logout'
-            }));
+            ws.send(JSON.stringify({action: 'logout'}));
             ws.close();
         });
 
         function messageDialog(friend) {
-
             var data = {
                 title: friend.id,
                 messages:friend.messageList,
@@ -102,8 +96,8 @@ $ehr('personal', ['binding', 'common_dialog', function (binding, common_dialog) 
             });
 
             common_dialog([
-                '<div [message:messages]>',
-                '   <div [innerHTML]="message.value" [style.color]="message.get?\'#d3d3d3\':\'#66dd66\'" [class]="message.get?\'text-left\':\'text-right\'"></div>',
+                '<div style="max-height:20em;overflow: auto;">',
+                '   <div [message:messages] [innerHTML]="message.value" [style.color]="message.get?\'#d3d3d3\':\'#66dd66\'" [class]="message.get?\'text-left\':\'text-right\'"></div>',
                 '</div>',
                 '<br>',
                 '<textarea [value]="messageContent"></textarea>'

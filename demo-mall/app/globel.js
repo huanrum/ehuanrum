@@ -3,11 +3,13 @@ $ehr(true);
 $ehr('global', ['common_dialog', function (common_dialog) {
 
     var options = {
-        service:{seto:'http://192.168.1.248:8888/mall',127:'http://192.168.1.248:8888/mall',binbin:'http://192.168.1.152:8888/mall'}
+        service:{seto:'http://192.168.1.248:8888/mall',127:'http://192.168.1.248:8888/mall',binbin:'http://192.168.1.152:8888/mall'},
+        websocket:{seto:'ws://192.168.1.248:8181',127:'ws://192.168.1.248:8181',binbin:'ws://192.168.1.152:8181'}
     };
 
     var globalData = {
         user: localStorage['ehuanrum_user'],
+        websocket:localStorage['ehuanrum_websocket'] || options.websocket.seto,
         service: localStorage['ehuanrum_service'] || options.service.seto,
         update: function (data, user) {
             var self = this;

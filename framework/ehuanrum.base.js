@@ -562,6 +562,7 @@
                     }
                 } else if (el.parentNode) {
                     el.parentNode.removeChild(el);
+                    data.$destroy();
                 }
             }
         }

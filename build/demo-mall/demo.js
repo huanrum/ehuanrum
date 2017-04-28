@@ -3,11 +3,13 @@ $ehr(true);
 $ehr('global', ['common_dialog', function (common_dialog) {
 
     var options = {
-        service:{seto:'http://192.168.1.248:8888/mall',127:'http://192.168.1.248:8888/mall',binbin:'http://192.168.1.152:8888/mall'}
+        service:{seto:'http://192.168.1.248:8888/mall',127:'http://192.168.1.248:8888/mall',binbin:'http://192.168.1.152:8888/mall'},
+        websocket:{seto:'ws://192.168.1.248:8181',127:'ws://192.168.1.248:8181',binbin:'ws://192.168.1.152:8181'}
     };
 
     var globalData = {
         user: localStorage['ehuanrum_user'],
+        websocket:localStorage['ehuanrum_websocket'] || options.websocket.seto,
         service: localStorage['ehuanrum_service'] || options.service.seto,
         update: function (data, user) {
             var self = this;
@@ -484,33 +486,6 @@ $ehr('common.service', ['http', 'functions.event', function (http, functions_eve
     };
 }]);
 
-$ehr('router.home',['common_page',function(common_page){
-
-    var template = [
-        '<div>{brief}</div>',
-        '<br>',
-        '<div>{info}</div>',
-        '<br>',
-        '<hr>',
-        '<div>{contact}</div>'
-    ].join('');
-
-    return function(){
-        return common_page(template,{title : 'Home'},function(data){
-            data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
-            data.info = [
-                '此项目中主要包含两个分块：商品展示和商品管理。',
-                '   商品展示：用户可以浏览所有商品，都可以点击购买，加入购物车，查看相信信息等等。',
-                '   商品管理：商场管理人员查看销售情况以及库存信息，分析商品的销售趋势，以便于后期的囤货。',
-                '   ',
-                '   '
-            ].join('<br>');
-            data.contact = 'email: <i>huanrum@126.com</i>';
-        });
-    };
-
-}]);
-
 $ehr('router.book.math',['common_page','book_math_service',function(common_page,data_service){
 
     return function(){
@@ -539,7 +514,34 @@ $ehr('book.story.service',['common_service',function(common_service){
 
 }]);
 
-$ehr('personal', ['binding', 'common_dialog', function (binding, common_dialog) {
+$ehr('router.home',['common_page',function(common_page){
+
+    var template = [
+        '<div>{brief}</div>',
+        '<br>',
+        '<div>{info}</div>',
+        '<br>',
+        '<hr>',
+        '<div>{contact}</div>'
+    ].join('');
+
+    return function(){
+        return common_page(template,{title : 'Home'},function(data){
+            data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
+            data.info = [
+                '此项目中主要包含两个分块：商品展示和商品管理。',
+                '   商品展示：用户可以浏览所有商品，都可以点击购买，加入购物车，查看相信信息等等。',
+                '   商品管理：商场管理人员查看销售情况以及库存信息，分析商品的销售趋势，以便于后期的囤货。',
+                '   ',
+                '   '
+            ].join('<br>');
+            data.contact = 'email: <i>huanrum@126.com</i>';
+        });
+    };
+
+}]);
+
+$ehr('personal', ['binding', 'global','common_dialog', function (binding, $global,common_dialog) {
 
     var clientId = Date.now(), template = [
         '<div>',
@@ -571,12 +573,9 @@ $ehr('personal', ['binding', 'common_dialog', function (binding, common_dialog) 
     function connection(item) {
         var scope = { title: 'connection', friends: [], messageDialog: messageDialog };
 
-        var ws = new WebSocket("ws://localhost:8181");
+        var ws = new WebSocket($global.websocket);
         ws.onopen = function (e) {
-            ws.send(JSON.stringify({
-                action: 'login',
-                data: item.id
-            }));
+            ws.send(JSON.stringify({action: 'login',data: item.id}));
         };
         ws.onmessage = function (e) {
             var dataMessage = JSON.parse(e.data);
@@ -611,14 +610,11 @@ $ehr('personal', ['binding', 'common_dialog', function (binding, common_dialog) 
         ].join(''), scope);
 
         scope.$destroy(function () {
-            ws.send(JSON.stringify({
-                action: 'logout'
-            }));
+            ws.send(JSON.stringify({action: 'logout'}));
             ws.close();
         });
 
         function messageDialog(friend) {
-
             var data = {
                 title: friend.id,
                 messages:friend.messageList,
