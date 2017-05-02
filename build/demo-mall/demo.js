@@ -638,8 +638,8 @@ $ehr('personal', ['binding', 'global','common_dialog', function (binding, $globa
             });
 
             common_dialog([
-                '<div [message:messages]>',
-                '   <div [innerHTML]="message.value" [style.color]="message.get?\'#d3d3d3\':\'#66dd66\'" [class]="message.get?\'text-left\':\'text-right\'"></div>',
+                '<div style="max-height:20em;overflow: auto;">',
+                '   <div [message:messages] [innerHTML]="message.value" [style.color]="message.get?\'#d3d3d3\':\'#66dd66\'" [class]="message.get?\'text-left\':\'text-right\'"></div>',
                 '</div>',
                 '<br>',
                 '<textarea [value]="messageContent"></textarea>'

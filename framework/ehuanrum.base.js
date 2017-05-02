@@ -51,7 +51,7 @@
                         active.scope().$destroy();
                     }
                     active = menu.apply(this, Array.prototype.slice.call(arguments, 1));
-                }else if(!menu){
+                } else if (!menu) {
                     chaceData.content.innerHTML = '<div style="position: absolute;top:10em;left:50%;">没有对应的页面,请确认输入的地址！</div>';
                 }
             }
@@ -262,7 +262,7 @@
                 }
             }
         }
-        return {enumerable:true};
+        return { enumerable: true };
     }
 
     //计算表达式需要关注里面的每一个变量
@@ -673,8 +673,8 @@
                     $value(element, field, val);
                     if (descriptor.set) {
                         descriptor.set(val);
-                    }else if(descriptor.writable){
-                         descriptor.value = val;
+                    } else if (descriptor.writable) {
+                        descriptor.value = val;
                     }
                 },
                 get: function () {
@@ -688,7 +688,7 @@
                 });
             } else {
                 element.addEventListener('click', function (e) {
-                    if(['INPUT','SELECT','TEXTAREA'].indexOf(e.target.nodeName) === -1){
+                    if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
                         $value(data, value, $value(element, field));
                     }
                     e.target.focus();
@@ -713,10 +713,33 @@
                     } else {
                         descriptor.value = val;
                     }
-                    render(val);
+                    render(extendArray(val));
                 }
             });
-            render($value(data, value || fields[1]));
+
+            if (value) {
+                _descriptorFileds(data, value, function () {
+                    descriptor = __getOwnPropertyDescriptor(data, value || fields[1]);
+                    render(extendArray($value(data, value || fields[1])));
+                });
+            }
+            render(extendArray($value(data, value || fields[1])));
+
+            function extendArray(list) {
+                if (list instanceof Array) {
+                    ['push', 'pop', 'shift', 'unshift'].forEach(function (funName) {
+                        Object.defineProperty(list, funName, {
+                            configurable: true,
+                            value: function () {
+                                var result = Array.prototype[funName].apply(list, arguments);
+                                render(list);
+                                return result;
+                            }
+                        });
+                    });
+                }
+                return list;
+            }
 
             function render(vals) {
                 elements.forEach(function (it) {
@@ -724,7 +747,7 @@
                         it.e.update();
                     }
                 });
-                elements = map(vals||[], function (item, i) {
+                elements = map(vals || [], function (item, i) {
                     var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || {}).e;
                     if (!bindElement) {
                         var da = { $index: i };
@@ -732,7 +755,7 @@
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
                                 get: function () {
-                                    return map($value(data, fields[1])||[], function (x) { return '' + x; }).indexOf('' + item);
+                                    return map($value(data, fields[1]) || [], function (x) { return '' + x; }).indexOf('' + item);
                                 }
                             });
                         }
@@ -752,7 +775,7 @@
                     } else {
                         bindElement.scope().$eval();
                     }
-                    bindElement.update(parentNode,nextSibling);
+                    bindElement.update(parentNode, nextSibling);
 
                     return { t: item, e: bindElement };
                 });
