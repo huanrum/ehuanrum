@@ -505,32 +505,38 @@
             var controls = ehuanrum('control');
 
             Array.prototype.filter.call(element.attributes || [], function (attr) {
-                return /^\[.+\]$/.test(attr.name);
+                return /^\[.+\]$/.test(attr.name) || /\{\{.*\}\}/.test(attr.value);
             }).sort(function (a, b) {
                 return /:/.test(b.name) - /:/.test(a.name);
             }).forEach(function (attr) {
                 if (!/:/.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
                     $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
-                } else {
+                } else if(/\{\{.*\}\}/.test(attr.value)){
+                    defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g,'').replace(/\}\}/g,''));
+                }else{
                     defineProperty(element, data, $name(attr.name.slice(1, -1)), attr.value);
                 }
-                if (!chaceData.binding) {
+                if (!chaceData.binding && /^\[.+\]$/.test(attr.name)) {
                     element.removeAttribute(attr.name);
                 }
             });
 
             if (!element.parentNode) { return; }
-            initChildren.apply(element, element.children);
+            initChildren.apply(element, element.childNodes);
         }
 
         function initChildren() {
             Array.prototype.forEach.call(arguments, function (child) {
-                if (!child.scope) {
-                    binding(child, data);
+                if(child instanceof Element){
+                        if (!child.scope) {
+                        binding(child, data);
                     //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
-                } else if (child.scope() !== data && data !== window) {
-                    child.scope().__proto__ = data;
-                    data.$eval(child.scope().$eval);
+                    } else if (child.scope() !== data && data !== window) {
+                        child.scope().__proto__ = data;
+                        data.$eval(child.scope().$eval);
+                    }
+                }else if(/\{\{.*\}\}/.test(child.data)){
+                    defineProperty(child, data, 'data', child.data.replace(/\{\{/g,'').replace(/\}\}/g,''));
                 }
             });
         }
@@ -601,6 +607,7 @@
             foreach(field.split(':'));
             //其他的都是element的普通属性
         } else {
+            $value(element,field,null);
             //简单属性名
             if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
                 if (typeof $value(data, value) === 'function') {

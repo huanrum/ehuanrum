@@ -1,4 +1,59 @@
 
+/*my-login*/
+.my-login {
+  text-align: center;
+  border: 1px solid #e3e3e3; }
+
+.my-login > * {
+  padding: 1em; }
+
+/*my-grid*/
+.table-header .table-row > *, .table-body .table-row > * {
+  display: inline-block;
+  width: 10rem;
+  padding: 0.5rem;
+  border-right: 1px solid #e3e3e3; }
+
+.table-header {
+  font-size: 1.2rem;
+  color: #ffffff;
+  background: #666699; }
+
+.table-body {
+  overflow: auto; }
+
+.table-body .table-row {
+  border: 1px solid #d3d3d3; }
+
+.table-body .table-row > * {
+  background: #f3f3f3; }
+
+.table-body .table-row:nth-child(2n), .table-body .table-row:nth-child(2n) > * {
+  background: #d3d3d3; }
+
+.table-body .table-row:hover {
+  opacity: 0.8; }
+
+.table-body .table-row > *:hover {
+  background: #99f399; }
+
+/*my-form*/
+.form-body .form-row {
+  padding: 1em 0; }
+
+.form-body .form-row > * {
+  display: inline-block; }
+
+/*my-label-value*/
+.label-value label {
+  display: inline-block;
+  width: 30%;
+  font-weight: bold; }
+
+.label-value div {
+  display: inline-block;
+  width: calc(70% - 2em); }
+
 /*page*/
 .ehuanrum-content .content-header {
   height: 2em;
@@ -54,61 +109,6 @@
   margin: 2px 1em;
   padding: 1px;
   cursor: pointer; }
-
-/*my-login*/
-.my-login {
-  text-align: center;
-  border: 1px solid #e3e3e3; }
-
-.my-login > * {
-  padding: 1em; }
-
-/*my-grid*/
-.table-header .table-row > *, .table-body .table-row > * {
-  display: inline-block;
-  width: 10rem;
-  padding: 0.5rem;
-  border-right: 1px solid #e3e3e3; }
-
-.table-header {
-  font-size: 1.2rem;
-  color: #ffffff;
-  background: #666699; }
-
-.table-body {
-  overflow: auto; }
-
-.table-body .table-row {
-  border: 1px solid #d3d3d3; }
-
-.table-body .table-row > * {
-  background: #f3f3f3; }
-
-.table-body .table-row:nth-child(2n), .table-body .table-row:nth-child(2n) > * {
-  background: #d3d3d3; }
-
-.table-body .table-row:hover {
-  opacity: 0.8; }
-
-.table-body .table-row > *:hover {
-  background: #99f399; }
-
-/*my-form*/
-.form-body .form-row {
-  padding: 1em 0; }
-
-.form-body .form-row > * {
-  display: inline-block; }
-
-/*my-label-value*/
-.label-value label {
-  display: inline-block;
-  width: 30%;
-  font-weight: bold; }
-
-.label-value div {
-  display: inline-block;
-  width: calc(70% - 2em); }
 
 .table-header .table-row > .cell-1, .table-body .table-row > .cell-1 {
   width: calc(10rem + 1rem); }

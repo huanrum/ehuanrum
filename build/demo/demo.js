@@ -19,6 +19,186 @@
 (function ($e) {
     'use strict';
 
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.ehr.checkbox',function(){
+        return function(element,data,field){
+            $e('binding')('<input type="checkbox" [checked]="'+field+'">',data,element);
+        }
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.ehr.file', ['value','binding','common_file',function (value,binding,common_file) {
+        return function (element, data, field) {
+            binding('<input type="file" [onchange]="onchange">', {
+                onchange: function (e) {
+                    if (e.target.files.length > 0) {
+                        var reader = new FileReader();
+                        var file = e.target.files[0];
+                        reader.onload = function () {
+                           value(data,field,common_file(file)(reader.result));
+                        };
+                        reader.readAsText(file,'gb2312');
+                    }
+                }
+            }, element);
+        }
+    }]);
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.ehr.input',function(){
+        return function(element,data,field){
+            $e('binding')('<input [value]="'+field+'">',data,element);
+        }
+    });
+
+})(window.$ehr);
+
+window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_drag) {
+
+    return function (element, data, field) {
+        setTimeout(function () {
+            element.parentNode.style.position = 'relative';
+            element.style.position = 'absolute';
+            element.style.left = element.offsetLeft + 'px';
+            element.style.top = element.offsetTop + 'px';
+        }, 500);
+
+        common_drag(element, function () {
+            return value(data, field);
+        });
+    };
+}]);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.my.form', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
+        return function (element, data, field) {
+            var newData = data.$extend({}, [field]);
+            Object.defineProperty(newData, 'fields', {
+                configurable: true,
+                enumerable: false,
+                get: function () {
+                    return  Object.keys(value(data, field));
+                }
+            });
+
+            binding([
+                '   <div class="form-body">',
+                '       <div [field:fields] class="form-row" [my.label.value]="'+field+':field">',
+                '       </div>',
+                '   </div>',
+            ].join(''), newData, element);
+        }
+    }]);
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.my.grid', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
+        return function (element, data, field) {
+            var newData = data.$extend({
+                select: data.select,
+                show: function (item) {
+                    common_dialog('<div [my.form]="item"></div>', {title:'展示一条数据',item:item,buttons:{
+                        'ok':function(){common_dialog('提交数据')(this.$close);},
+                        'cancel':function(){this.$close();}
+                    }});
+                }
+            }, ['height',field]);
+            Object.defineProperty(newData, 'columns', {
+                configurable: true,
+                enumerable: false,
+                get: function () {
+                    var columns = [];
+                    value(data, field).forEach(function (it) {
+                        Object.keys(it).forEach(function (k) {
+                            if (columns.indexOf(k) === -1) {
+                                columns.push(k);
+                            }
+                        });
+                    });
+                    return columns;
+                }
+            });
+
+            binding([
+                '   <div class="table-header">',
+                '       <div class="table-row">',
+                '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
+                '       </div>',
+                '   </div>',
+                '   <div class="table-body" [style.height]="height">',
+                '       <div [item:items] class="table-row" [ondblclick]="show(item)" [onclick]="select">',
+                '           <div [column:columns] [class]="\'cell-\' + $index" [innerHTML]="item[column]"></div>',
+                '       </div>',
+                '   </div>'
+            ].join(''), newData, element);
+        }
+    }]);
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.my.label.value', ['binding', function (binding) {
+        return function (element, data, field) {
+            var newData = data.$extend({}, field.split(':'));
+
+            binding([
+                '   <div class="label-value">',
+                '       <label [innerHTML]="field"></label>',
+                '       <div [innerHTML]="item[field]"></div>',
+                '   </div>',
+            ].join(''), newData, element);
+        }
+    }]);
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
+
+    $e('control.my.login',function(){
+        return function(element,data,field){
+            $e('binding')([
+                '<div class="my-login">',
+                '   <div>',
+                '       <label>UserName</label>',
+                '       <input [value]="username">',
+                '   </div>',
+                '   <div>',
+                '       <label>Password</label>',
+                '       <input [value]="password">',
+                '   </div>',
+                '<div><button [onclick]="'+field+'(username,password)">Login</button></div>',
+                '</div>',
+                ].join(''),data,element);
+        }
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('filter.capitalize',function(){
         return function(value,index){
@@ -267,186 +447,6 @@ window.$ehr('common.drag', [function () {
     });
 
 })(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
-
-    $e('control.ehr.checkbox',function(){
-        return function(element,data,field){
-            $e('binding')('<input type="checkbox" [checked]="'+field+'">',data,element);
-        }
-    });
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
-
-    $e('control.ehr.file', ['value','binding','common_file',function (value,binding,common_file) {
-        return function (element, data, field) {
-            binding('<input type="file" [onchange]="onchange">', {
-                onchange: function (e) {
-                    if (e.target.files.length > 0) {
-                        var reader = new FileReader();
-                        var file = e.target.files[0];
-                        reader.onload = function () {
-                           value(data,field,common_file(file)(reader.result));
-                        };
-                        reader.readAsText(file,'gb2312');
-                    }
-                }
-            }, element);
-        }
-    }]);
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
-
-    $e('control.ehr.input',function(){
-        return function(element,data,field){
-            $e('binding')('<input [value]="'+field+'">',data,element);
-        }
-    });
-
-})(window.$ehr);
-
-window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_drag) {
-
-    return function (element, data, field) {
-        setTimeout(function () {
-            element.parentNode.style.position = 'relative';
-            element.style.position = 'absolute';
-            element.style.left = element.offsetLeft + 'px';
-            element.style.top = element.offsetTop + 'px';
-        }, 500);
-
-        common_drag(element, function () {
-            return value(data, field);
-        });
-    };
-}]);
-(function ($e) {
-    'use strict';
-
-    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
-
-    $e('control.my.form', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
-        return function (element, data, field) {
-            var newData = data.$extend({}, [field]);
-            Object.defineProperty(newData, 'fields', {
-                configurable: true,
-                enumerable: false,
-                get: function () {
-                    return  Object.keys(value(data, field));
-                }
-            });
-
-            binding([
-                '   <div class="form-body">',
-                '       <div [field:fields] class="form-row" [my.label.value]="'+field+':field">',
-                '       </div>',
-                '   </div>',
-            ].join(''), newData, element);
-        }
-    }]);
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
-
-    $e('control.my.grid', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
-        return function (element, data, field) {
-            var newData = data.$extend({
-                select: data.select,
-                show: function (item) {
-                    common_dialog('<div [my.form]="item"></div>', {title:'展示一条数据',item:item,buttons:{
-                        'ok':function(){common_dialog('提交数据')(this.$close);},
-                        'cancel':function(){this.$close();}
-                    }});
-                }
-            }, ['height',field]);
-            Object.defineProperty(newData, 'columns', {
-                configurable: true,
-                enumerable: false,
-                get: function () {
-                    var columns = [];
-                    value(data, field).forEach(function (it) {
-                        Object.keys(it).forEach(function (k) {
-                            if (columns.indexOf(k) === -1) {
-                                columns.push(k);
-                            }
-                        });
-                    });
-                    return columns;
-                }
-            });
-
-            binding([
-                '   <div class="table-header">',
-                '       <div class="table-row">',
-                '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
-                '       </div>',
-                '   </div>',
-                '   <div class="table-body" [style.height]="height">',
-                '       <div [item:items] class="table-row" [ondblclick]="show(item)" [onclick]="select">',
-                '           <div [column:columns] [class]="\'cell-\' + $index" [innerHTML]="item[column]"></div>',
-                '       </div>',
-                '   </div>'
-            ].join(''), newData, element);
-        }
-    }]);
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
-
-    $e('control.my.label.value', ['binding', function (binding) {
-        return function (element, data, field) {
-            var newData = data.$extend({}, field.split(':'));
-
-            binding([
-                '   <div class="label-value">',
-                '       <label [innerHTML]="field"></label>',
-                '       <div [innerHTML]="item[field]"></div>',
-                '   </div>',
-            ].join(''), newData, element);
-        }
-    }]);
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的指令,必须以control.开头,使用的时候[ehr.input]="field",定义的时候有三个参数,第一个参数是指令所在的元素,第二个参数是元素关联的数据,第三个参数是field(调用时候传的参数名)
-
-    $e('control.my.login',function(){
-        return function(element,data,field){
-            $e('binding')([
-                '<div class="my-login">',
-                '   <div>',
-                '       <label>UserName</label>',
-                '       <input [value]="username">',
-                '   </div>',
-                '   <div>',
-                '       <label>Password</label>',
-                '       <input [value]="password">',
-                '   </div>',
-                '<div><button [onclick]="'+field+'(username,password)">Login</button></div>',
-                '</div>',
-                ].join(''),data,element);
-        }
-    });
-
-})(window.$ehr);
 /**
  * Created by Administrator on 2017/3/28.
  */
@@ -576,50 +576,22 @@ window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
-
-        return function (name) {
-            return common_page([
-               '<div [my.grid]="items"></div>'
-            ].join(''),{
-                    title:'Learn',
-                    items:service_learn.get(),
-                    select:function(){
-                        service_learn.select(this.item);
-                    }
-            });
-        };
-    }]);
-
-     $e('service.learn', ['common_service',function (common_service) {
-
-        var service = common_service({fields:['id','name','value','date']});
-        service.load();
-        return service;
-
-    }]);
-
-
-})(window.$ehr);
-
-/**
- * Created by Administrator on 2017/3/28.
- */
-(function ($e) {
-    'use strict';
-
-    //界面上的菜单数据以及路由和界面,必须以router.开头
     $e('router.work.binding', ['common_page', 'common_dialog', 'functions', function (common_page, common_dialog, functions) {
 
         return function (name) {
             var binding = common_page([
                 '<div>',
                 '    <br>',
+                '    <br>',
+                '    <div>{{title}}</div>',
+                '    <input value="{{title}}">',
+                '    <br>',
                 '    <div [ehr.file]="csv"></div>',
                 '      <button [onclick]="showCsv(csv)">showCsv</button>',
                 '    <br>',
                 '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
                 '    <div [innerHTML]="name|capitalize(index)"></div>',
+                
                 '</div>'
             ].join(''), {
                     title: 'Binding',
@@ -720,6 +692,39 @@ window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_
 
             return binding;
         };
+    }]);
+
+
+})(window.$ehr);
+
+/**
+ * Created by Administrator on 2017/3/28.
+ */
+(function ($e) {
+    'use strict';
+
+    //界面上的菜单数据以及路由和界面,必须以router.开头
+    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
+
+        return function (name) {
+            return common_page([
+               '<div [my.grid]="items"></div>'
+            ].join(''),{
+                    title:'Learn',
+                    items:service_learn.get(),
+                    select:function(){
+                        service_learn.select(this.item);
+                    }
+            });
+        };
+    }]);
+
+     $e('service.learn', ['common_service',function (common_service) {
+
+        var service = common_service({fields:['id','name','value','date']});
+        service.load();
+        return service;
+
     }]);
 
 

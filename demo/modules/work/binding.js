@@ -11,11 +11,16 @@
             var binding = common_page([
                 '<div>',
                 '    <br>',
+                '    <br>',
+                '    <div>{{title}}</div>',
+                '    <input value="{{title}}">',
+                '    <br>',
                 '    <div [ehr.file]="csv"></div>',
                 '      <button [onclick]="showCsv(csv)">showCsv</button>',
                 '    <br>',
                 '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
                 '    <div [innerHTML]="name|capitalize(index)"></div>',
+                
                 '</div>'
             ].join(''), {
                     title: 'Binding',
