@@ -63,7 +63,6 @@
     ehuanrum('binding', function () { return binding; });
     ehuanrum('value', function () { return $value; });
 
-
     return function () {
         return ehuanrum;
     };
@@ -398,6 +397,10 @@
             controller = parentNode;
             parentNode = null;
         }
+        if (typeof data === 'function') {
+            controller = data;
+            data = {};
+        }
 
         if (typeof elements[0] === 'string' && typeof elements[1] === 'object') {
             Object.keys(elements[1]).forEach(function (k) {
@@ -411,14 +414,11 @@
                 (parentNode || chaceData.content).appendChild(element)
             });
         }
-        if (!(elements instanceof Array) && !(elements instanceof HTMLElement)) {
+        if (data && !(elements instanceof Array) && !(elements instanceof HTMLElement)) {
             throw new Error('element必须是DOM元素。');
         }
-        if (typeof data === 'function') {
-            controller = data;
-            data = {};
-        }
-
+        
+        data = data || {};
         initBindingDefineProperty();
         //先扩展element保证后面initBindingElement里面可用
         extendElement(elements, data);
@@ -505,32 +505,42 @@
             var controls = ehuanrum('control');
 
             Array.prototype.filter.call(element.attributes || [], function (attr) {
-                return /^\[.+\]$/.test(attr.name);
+                return /^\[.+\]$/.test(attr.name) || /\{\{.*\}\}/.test(attr.value);
             }).sort(function (a, b) {
                 return /:/.test(b.name) - /:/.test(a.name);
             }).forEach(function (attr) {
-                if (!/:/.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
+                if (!/:/.test(attr.name) && !/^\[style\./.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
                     $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
-                } else {
+                } else if(/\{\{.*\}\}/.test(attr.value)){
+                    defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g,'').replace(/\}\}/g,''));
+                }else{
                     defineProperty(element, data, $name(attr.name.slice(1, -1)), attr.value);
                 }
                 if (!chaceData.binding) {
-                    element.removeAttribute(attr.name);
+                    setTimeout(function(){
+                        if(/^\[.+\]$/.test(attr.name) || /\{\{.*\}\}/.test(attr.value)){
+                            element.removeAttribute(attr.name);
+                        }
+                    },50);
                 }
             });
 
             if (!element.parentNode) { return; }
-            initChildren.apply(element, element.children);
+            initChildren.apply(element, element.childNodes);
         }
 
         function initChildren() {
             Array.prototype.forEach.call(arguments, function (child) {
-                if (!child.scope) {
-                    binding(child, data);
+                if(child instanceof Element){
+                        if (!child.scope) {
+                        binding(child, data);
                     //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
-                } else if (child.scope() !== data && data !== window) {
-                    child.scope().__proto__ = data;
-                    data.$eval(child.scope().$eval);
+                    } else if (child.scope() !== data && data !== window) {
+                        child.scope().__proto__ = data;
+                        data.$eval(child.scope().$eval);
+                    }
+                }else if(/\{\{.*\}\}/.test(child.data)){
+                    defineProperty(child, data, 'data', child.data.replace(/\{\{/g,'').replace(/\}\}/g,''));
                 }
             });
         }
@@ -577,7 +587,8 @@
             Object.keys(replaces).forEach(function (field) {
                 name = name.replace(field, replaces[field]);
             });
-            return name;
+            name = name.split(/[_\-]/).map(function(i){return i[0].toLocaleUpperCase()+i.slice(1);}).join('');
+            return name[0].toLocaleLowerCase() + name.slice(1);
         }
 
         function createElement(string) {
@@ -665,7 +676,24 @@
             var values = value.split('.'), lastValue = values.pop();
             var descriptor = __getOwnPropertyDescriptor(values.length ? $value(data, values.join('.')) : data, lastValue);
             data.$eval(function () { $value(element, field, $value(data, value)); });
-
+            if (field === 'value') {
+                element.addEventListener('keyup', function () {
+                    $value(data, value, $value(element, field));
+                    data.$eval();
+                });
+                element.addEventListener('change', function () {
+                    $value(data, value, $value(element, field));
+                    data.$eval();
+                });
+                $value(element, field,$value(data, value));
+            } else {
+                element.addEventListener('click', function (e) {
+                    if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
+                        $value(data, value, $value(element, field));
+                    }
+                    e.target.focus();
+                });
+            }
             Object.defineProperty(values.length ? $value(data, values.join('.')) : data, lastValue, {
                 configurable: true,
                 enumerable: descriptor.enumerable,
@@ -681,19 +709,6 @@
                     return (field === 'value' && element.value) || (descriptor.get && descriptor.get()) || descriptor.value;
                 }
             });
-            if (field === 'value') {
-                element.addEventListener('keyup', function () {
-                    $value(data, value, $value(element, field));
-                    data.$eval();
-                });
-            } else {
-                element.addEventListener('click', function (e) {
-                    if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
-                        $value(data, value, $value(element, field));
-                    }
-                    e.target.focus();
-                });
-            }
         }
 
         function foreach(fields) {
@@ -723,6 +738,9 @@
                     render(extendArray($value(data, value || fields[1])));
                 });
             }
+            if(chaceData.binding){
+                binding(document.createComment(element.outerHTML)).update(parentNode, nextSibling);
+            }
             render(extendArray($value(data, value || fields[1])));
 
             function extendArray(list) {
@@ -747,10 +765,9 @@
                         it.e.update();
                     }
                 });
-                elements = map(vals || [], function (item, i) {
+                elements = map(vals || [], function (item, i, obj, da) {
                     var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || {}).e;
                     if (!bindElement) {
-                        var da = { $index: i };
                         if (typeof i === 'number') {
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
@@ -782,15 +799,23 @@
 
                 function map(obj, fn) {
                     if ('length' in obj) {
-                        return Array.prototype.map.call(obj, fn);
+                        return Array.prototype.map.call(obj, function(v,i,list){
+                            return mapEach(v,i,i,list.length);
+                        });
                     } else if (obj && typeof obj === 'object') {
-                        return Array.prototype.map.call(Object.keys(obj), function (k) {
-                            return fn(obj[k], k, obj);
+                        return Array.prototype.map.call(Object.keys(obj), function (k,i,list) {
+                            return mapEach(obj[k], k,i,list.length);
                         });
                     }
                     return [];
-                }
 
+                    function mapEach(val,pro,index,count){
+                        var result = {$index: pro};
+                        Object.defineProperty(result,'$first',{value:index === 0});
+                        Object.defineProperty(result,'$last',{value:index+1 === count});
+                        return fn(val, pro, obj, result);
+                    }
+                }
             }
         }
 

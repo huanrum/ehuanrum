@@ -63,7 +63,6 @@
     ehuanrum('binding', function () { return binding; });
     ehuanrum('value', function () { return $value; });
 
-
     return function () {
         return ehuanrum;
     };
@@ -510,15 +509,19 @@
             }).sort(function (a, b) {
                 return /:/.test(b.name) - /:/.test(a.name);
             }).forEach(function (attr) {
-                if (!/:/.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
+                if (!/:/.test(attr.name) && !/^\[style\./.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
                     $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
                 } else if(/\{\{.*\}\}/.test(attr.value)){
                     defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g,'').replace(/\}\}/g,''));
                 }else{
                     defineProperty(element, data, $name(attr.name.slice(1, -1)), attr.value);
                 }
-                if (!chaceData.binding && /^\[.+\]$/.test(attr.name)) {
-                    element.removeAttribute(attr.name);
+                if (!chaceData.binding) {
+                    setTimeout(function(){
+                        if(/^\[.+\]$/.test(attr.name) || /\{\{.*\}\}/.test(attr.value)){
+                            element.removeAttribute(attr.name);
+                        }
+                    },50);
                 }
             });
 
@@ -584,7 +587,8 @@
             Object.keys(replaces).forEach(function (field) {
                 name = name.replace(field, replaces[field]);
             });
-            return name;
+            name = name.split(/[_\-]/).map(function(i){return i[0].toLocaleUpperCase()+i.slice(1);}).join('');
+            return name[0].toLocaleLowerCase() + name.slice(1);
         }
 
         function createElement(string) {
@@ -734,8 +738,9 @@
                     render(extendArray($value(data, value || fields[1])));
                 });
             }
-
-            binding(document.createComment(element.outerHTML)).update(parentNode, nextSibling);
+            if(chaceData.binding){
+                binding(document.createComment(element.outerHTML)).update(parentNode, nextSibling);
+            }
             render(extendArray($value(data, value || fields[1])));
 
             function extendArray(list) {
@@ -760,10 +765,9 @@
                         it.e.update();
                     }
                 });
-                elements = map(vals || [], function (item, i) {
+                elements = map(vals || [], function (item, i, obj, da) {
                     var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || {}).e;
                     if (!bindElement) {
-                        var da = { $index: i };
                         if (typeof i === 'number') {
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
@@ -795,15 +799,23 @@
 
                 function map(obj, fn) {
                     if ('length' in obj) {
-                        return Array.prototype.map.call(obj, fn);
+                        return Array.prototype.map.call(obj, function(v,i,list){
+                            return mapEach(v,i,i,list.length);
+                        });
                     } else if (obj && typeof obj === 'object') {
-                        return Array.prototype.map.call(Object.keys(obj), function (k) {
-                            return fn(obj[k], k, obj);
+                        return Array.prototype.map.call(Object.keys(obj), function (k,i,list) {
+                            return mapEach(obj[k], k,i,list.length);
                         });
                     }
                     return [];
-                }
 
+                    function mapEach(val,pro,index,count){
+                        var result = {$index: pro};
+                        Object.defineProperty(result,'$first',{value:index === 0});
+                        Object.defineProperty(result,'$last',{value:index+1 === count});
+                        return fn(val, pro, obj, result);
+                    }
+                }
             }
         }
 

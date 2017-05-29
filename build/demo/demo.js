@@ -576,24 +576,57 @@ window.$ehr('common.drag', [function () {
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
+    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
+
+        return function (name) {
+            return common_page([
+               '<div [my.grid]="items"></div>'
+            ].join(''),{
+                    title:'Learn',
+                    items:service_learn.get(),
+                    select:function(){
+                        service_learn.select(this.item);
+                    }
+            });
+        };
+    }]);
+
+     $e('service.learn', ['common_service',function (common_service) {
+
+        var service = common_service({fields:['id','name','value','date']});
+        service.load();
+        return service;
+
+    }]);
+
+
+})(window.$ehr);
+
+/**
+ * Created by Administrator on 2017/3/28.
+ */
+(function ($e) {
+    'use strict';
+
+    //界面上的菜单数据以及路由和界面,必须以router.开头
     $e('router.work.binding', ['common_page', 'common_dialog', 'functions','random', function (common_page, common_dialog, functions,random) {
 
         return function (name) {
             var binding = common_page([
                 '<div>',
-                // '    <br>',
-                // '    <br>',
-                // '    <div>{{title}}</div>',
-                '    <input value="{{title}}" class="{{name}}">',
+                '    <br>',
+                '    <br>',
+                '    <div>{{title}}</div>',
+                '    <input value="{{title}}" class="{{name}}" [style.font-size]="\'24px\'">',
                 '    <select value="{{select}}">',
                 '    <option [op:options] value="{{op.id}}">{{op.name}}</option>',
                 '    </select>',
-                // '    <br>',
-                // '    <div [ehr.file]="csv"></div>',
-                // '      <button [onclick]="showCsv(csv)">showCsv</button>',
-                // '    <br>',
-                // '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
-                // '    <div [innerHTML]="name|capitalize(index)"></div>',
+                '    <br>',
+                '    <div [ehr.file]="csv"></div>',
+                '      <button [onclick]="showCsv(csv)">showCsv</button>',
+                '    <br>',
+                '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
+                '    <div [innerHTML]="name|capitalize(index)"></div>',
                 
                 '</div>'
             ].join(''), {
@@ -698,39 +731,6 @@ window.$ehr('common.drag', [function () {
 
             return binding;
         };
-    }]);
-
-
-})(window.$ehr);
-
-/**
- * Created by Administrator on 2017/3/28.
- */
-(function ($e) {
-    'use strict';
-
-    //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
-
-        return function (name) {
-            return common_page([
-               '<div [my.grid]="items"></div>'
-            ].join(''),{
-                    title:'Learn',
-                    items:service_learn.get(),
-                    select:function(){
-                        service_learn.select(this.item);
-                    }
-            });
-        };
-    }]);
-
-     $e('service.learn', ['common_service',function (common_service) {
-
-        var service = common_service({fields:['id','name','value','date']});
-        service.load();
-        return service;
-
     }]);
 
 
