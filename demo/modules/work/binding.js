@@ -5,27 +5,31 @@
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.work.binding', ['common_page', 'common_dialog', 'functions', function (common_page, common_dialog, functions) {
+    $e('router.work.binding', ['common_page', 'common_dialog', 'functions','random', function (common_page, common_dialog, functions,random) {
 
         return function (name) {
             var binding = common_page([
                 '<div>',
-                '    <br>',
-                '    <br>',
-                '    <div>{{title}}</div>',
-                '    <input value="{{title}}">',
-                '    <br>',
-                '    <div [ehr.file]="csv"></div>',
-                '      <button [onclick]="showCsv(csv)">showCsv</button>',
-                '    <br>',
-                '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
-                '    <div [innerHTML]="name|capitalize(index)"></div>',
+                // '    <br>',
+                // '    <br>',
+                // '    <div>{{title}}</div>',
+                '    <input value="{{title}}" class="{{name}}">',
+                '    <select value="{{select}}">',
+                '    <option [op:options] value="{{op.id}}">{{op.name}}</option>',
+                '    </select>',
+                // '    <br>',
+                // '    <div [ehr.file]="csv"></div>',
+                // '      <button [onclick]="showCsv(csv)">showCsv</button>',
+                // '    <br>',
+                // '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
+                // '    <div [innerHTML]="name|capitalize(index)"></div>',
                 
                 '</div>'
             ].join(''), {
                     title: 'Binding',
                     name: name,
                     index: 0,
+                    options : random({id:"[1+1]",name:"[(a-z)6-10]"},10),
                     color: function () {
                         return functions.color(this.index);
                     }
@@ -33,6 +37,8 @@
                     var handel = setInterval(function () {
                         scope.index = Math.floor(Math.random() * 100);
                     }, 1000);
+
+                    scope.select = scope.options[3].id;
 
                     scope.showCsv = function (array) {
                         if (array instanceof Array) {

@@ -398,6 +398,10 @@
             controller = parentNode;
             parentNode = null;
         }
+        if (typeof data === 'function') {
+            controller = data;
+            data = {};
+        }
 
         if (typeof elements[0] === 'string' && typeof elements[1] === 'object') {
             Object.keys(elements[1]).forEach(function (k) {
@@ -411,14 +415,11 @@
                 (parentNode || chaceData.content).appendChild(element)
             });
         }
-        if (!(elements instanceof Array) && !(elements instanceof HTMLElement)) {
+        if (data && !(elements instanceof Array) && !(elements instanceof HTMLElement)) {
             throw new Error('element必须是DOM元素。');
         }
-        if (typeof data === 'function') {
-            controller = data;
-            data = {};
-        }
-
+        
+        data = data || {};
         initBindingDefineProperty();
         //先扩展element保证后面initBindingElement里面可用
         extendElement(elements, data);
@@ -607,7 +608,6 @@
             foreach(field.split(':'));
             //其他的都是element的普通属性
         } else {
-            $value(element,field,null);
             //简单属性名
             if (/^[0-9a-zA-Z\._$@]*$/.test(value)) {
                 if (typeof $value(data, value) === 'function') {
@@ -672,7 +672,24 @@
             var values = value.split('.'), lastValue = values.pop();
             var descriptor = __getOwnPropertyDescriptor(values.length ? $value(data, values.join('.')) : data, lastValue);
             data.$eval(function () { $value(element, field, $value(data, value)); });
-
+            if (field === 'value') {
+                element.addEventListener('keyup', function () {
+                    $value(data, value, $value(element, field));
+                    data.$eval();
+                });
+                element.addEventListener('change', function () {
+                    $value(data, value, $value(element, field));
+                    data.$eval();
+                });
+                $value(element, field,$value(data, value));
+            } else {
+                element.addEventListener('click', function (e) {
+                    if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
+                        $value(data, value, $value(element, field));
+                    }
+                    e.target.focus();
+                });
+            }
             Object.defineProperty(values.length ? $value(data, values.join('.')) : data, lastValue, {
                 configurable: true,
                 enumerable: descriptor.enumerable,
@@ -688,19 +705,6 @@
                     return (field === 'value' && element.value) || (descriptor.get && descriptor.get()) || descriptor.value;
                 }
             });
-            if (field === 'value') {
-                element.addEventListener('keyup', function () {
-                    $value(data, value, $value(element, field));
-                    data.$eval();
-                });
-            } else {
-                element.addEventListener('click', function (e) {
-                    if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
-                        $value(data, value, $value(element, field));
-                    }
-                    e.target.focus();
-                });
-            }
         }
 
         function foreach(fields) {
@@ -730,6 +734,8 @@
                     render(extendArray($value(data, value || fields[1])));
                 });
             }
+
+            binding(document.createComment(element.outerHTML)).update(parentNode, nextSibling);
             render(extendArray($value(data, value || fields[1])));
 
             function extendArray(list) {
