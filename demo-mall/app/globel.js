@@ -3,8 +3,8 @@ $ehr(true);
 $ehr('global', ['common_dialog', function (common_dialog) {
 
     var options = {
-        service:{seto:'http://192.168.1.248:8888/mall',127:'http://192.168.1.248:8888/mall',binbin:'http://192.168.1.152:8888/mall'},
-        websocket:{seto:'ws://192.168.1.248:8181',127:'ws://192.168.1.248:8181',binbin:'ws://192.168.1.152:8181'}
+        service:{seto:'http://192.168.1.248:8888/mall',127:'http://127.0.0.1:8888/mall',binbin:'http://192.168.1.152:8888/mall'},
+        websocket:{seto:'ws://192.168.1.248:8181',127:'ws://127.0.0.1:8181',binbin:'ws://192.168.1.152:8181'}
     };
 
     var globalData = {
