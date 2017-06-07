@@ -5,3 +5,5 @@ node_modules/
 demo-build/
 build/demo-build/
 build/web.config
+*/gulpfile.js
+*/index.template
