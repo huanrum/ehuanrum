@@ -12,6 +12,10 @@ sed -i "s/$TITLE/$NAME/g" "$DIR/index.template"
 echo -e "$GREENCOLOR copy index.html.$NOCOLOR"
 echo -e " "
 
+cp -R "$DIR/assets/" "$DIR/../build/$NAME/assets/"
+echo -e "$GREENCOLOR copy assets.$NOCOLOR"
+echo -e " "
+
 cp "$DIR/../gulpfile.js" "$DIR/gulpfile.js"
 echo -e "$GREENCOLOR copy gulpfile.js.$NOCOLOR"
 echo -e " "
