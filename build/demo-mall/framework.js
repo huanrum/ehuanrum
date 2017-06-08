@@ -506,21 +506,21 @@
 
             Array.prototype.filter.call(element.attributes || [], function (attr) {
                 /*ng,Vue都支持这个*/ /*ng,Vue属性*/ /*ng,Vue事件*/
-                return /\{\{.*}}/.test(attr.value) || /^\[.+]$/.test(attr.name) || /^:.+$/.test(attr.name) || /^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name);
+                return /\{\{.*\}\}/.test(attr.value) || /^\[.+\]$/.test(attr.name) || /^:.+$/.test(attr.name) || /^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name);
             }).sort(function (a, b) {
                 return /:/.test(b.name) - /:/.test(a.name);
             }).forEach(function (attr) {
                 if (!/:/.test(attr.name) && !/^\[style\./.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
                     $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
-                } else if(/\{\{.*}}/.test(attr.value)){
-                    defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g,'').replace(/}}/g,''));
+                } else if(/\{\{.*\}\}/.test(attr.value)){
+                    defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g,'').replace(/\}\}/g,''));
                 }else{
-                    defineProperty(element, data, $name(((/^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name))?'on':'')+attr.name.replace(/^[\[]\(\):@]/g,'').replace(/[\[]\(\):@]$/g,'')), attr.value);
+                    defineProperty(element, data, $name(((/^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name))?'on':'')+attr.name.replace(/^[\[\]\(\):@]/g,'').replace(/[\[\]\(\):@]$/g,'')), attr.value);
                    
                 }
                 if (!chaceData.binding) {
                     setTimeout(function(){
-                        if(/^\[.+]$/.test(attr.name) || /\{\{.*}}/.test(attr.value)){
+                        if(/^\[.+\]$/.test(attr.name) || /\{\{.*\}\}/.test(attr.value)){
                             element.removeAttribute(attr.name);
                         }
                     },50);
