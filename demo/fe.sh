@@ -12,6 +12,7 @@ sed -i "s/$TITLE/$NAME/g" "$DIR/index.template"
 echo -e "$GREENCOLOR copy index.html.$NOCOLOR"
 echo -e " "
 
+rm -rf "$DIR/../build/$NAME/assets/"
 cp -R "$DIR/assets/" "$DIR/../build/$NAME/assets/"
 echo -e "$GREENCOLOR copy assets.$NOCOLOR"
 echo -e " "
