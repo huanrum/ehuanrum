@@ -533,7 +533,7 @@
 
         function initChildren() {
             Array.prototype.forEach.call(arguments, function (child) {
-                if(child instanceof Element){
+                if(child instanceof Element && ['SCRIPT'].indexOf()===-1){
                         if (!child.scope) {
                         binding(child, data);
                     //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
