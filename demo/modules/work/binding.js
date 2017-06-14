@@ -15,11 +15,11 @@
                 '    <div>{{title}}</div>',
                 '    <input value="{{title}}" class="{{name}}" [style.font-size]="\'24px\'">',
                 '    <select value="{{select}}">',
-                '    <option [op:options] value="{{op.id}}">{{op.name}}</option>',
+                '       <option [op:options] value="{{op.id}}">{{op.name}}</option>',
                 '    </select>',
                 '    <br>',
-                '    <div [ehr.file]="csv"></div>',
-                '      <button [onclick]="showCsv(csv)">showCsv</button>',
+                '    <div [ehr.file]="csv" (changefile)="testEvent"></div>',
+                '    <button [onclick]="showCsv(csv)">showCsv</button>',
                 '    <br>',
                 '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
                 '    <div [innerHTML]="name|capitalize(index)"></div>',
@@ -39,7 +39,9 @@
                     }, 1000);
 
                     scope.select = scope.options[3].id;
-
+                    scope.testEvent = function(e,data){
+                        scope.showCsv(data);
+                    };
                     scope.showCsv = function (array) {
                         if (array instanceof Array) {
                             var items = [];

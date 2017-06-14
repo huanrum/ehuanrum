@@ -42,6 +42,7 @@
                         var file = e.target.files[0];
                         reader.onload = function () {
                            value(data,field,common_file(file)(reader.result));
+                           element.$emit('changefile',value(data,field));
                         };
                         reader.readAsText(file,'gb2312');
                     }
@@ -193,6 +194,18 @@ window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_
                 '</div>',
                 ].join(''),data,element);
         }
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
     });
 
 })(window.$ehr);
@@ -435,18 +448,6 @@ window.$ehr('common.drag', [function () {
     });
 
 })(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length || 0;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
 /**
  * Created by Administrator on 2017/3/28.
  */
@@ -619,11 +620,11 @@ window.$ehr('common.drag', [function () {
                 '    <div>{{title}}</div>',
                 '    <input value="{{title}}" class="{{name}}" [style.font-size]="\'24px\'">',
                 '    <select value="{{select}}">',
-                '    <option [op:options] value="{{op.id}}">{{op.name}}</option>',
+                '       <option [op:options] value="{{op.id}}">{{op.name}}</option>',
                 '    </select>',
                 '    <br>',
-                '    <div [ehr.file]="csv"></div>',
-                '      <button [onclick]="showCsv(csv)">showCsv</button>',
+                '    <div [ehr.file]="csv" (changefile)="testEvent"></div>',
+                '    <button [onclick]="showCsv(csv)">showCsv</button>',
                 '    <br>',
                 '    <div [style.color]="color()" [style.fontSize]="index+\'px\'" [innerHTML]="index"> </div>',
                 '    <div [innerHTML]="name|capitalize(index)"></div>',
@@ -643,7 +644,9 @@ window.$ehr('common.drag', [function () {
                     }, 1000);
 
                     scope.select = scope.options[3].id;
-
+                    scope.testEvent = function(e,data){
+                        scope.showCsv(data);
+                    };
                     scope.showCsv = function (array) {
                         if (array instanceof Array) {
                             var items = [];

@@ -12,6 +12,7 @@
                         var file = e.target.files[0];
                         reader.onload = function () {
                            value(data,field,common_file(file)(reader.result));
+                           element.$emit('changefile',value(data,field));
                         };
                         reader.readAsText(file,'gb2312');
                     }

@@ -466,6 +466,12 @@
             return newObject;
         }
 
+        function initEvent(args){
+             var evt = document.createEvent("HTMLEvents");
+             evt.initEvent.apply(evt,args);
+             return evt;
+        }
+
         function initBindingDefineProperty() {
             if (!data.$eval || (data.$eval === data.__proto__.$eval)) {
 
@@ -474,6 +480,7 @@
                 Object.defineProperty(data, '$eval', { value: _event(data) });
                 Object.defineProperty(data, '$real', { value: function () { return JSON.parse(JSON.stringify(data) || 'null'); } });
                 Object.defineProperty(data, '$extend', { value: function (newObject, pros) { return _$extend(data, newObject, pros); } });
+                Object.defineProperty(data, '$emit', { value: function () { var evt = initEvent(arguments);elements.forEach(function(dom){dom.dispatchEvent(evt);});}});
 
                 if (controller) {
                     controller(data, elements);

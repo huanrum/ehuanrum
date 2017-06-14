@@ -560,6 +560,21 @@
                     update(element, parent, next)
                 }
             };
+            element.$emit = function (type) { 
+                var args = Array.prototype.slice.apply(arguments);
+                args[0] =  document.createEvent("HTMLEvents");
+                args[0].initEvent(type,true,true);
+                args[0].data = args;
+               
+                if (element instanceof Array) {
+                    element.forEach(function(dom){
+                        dom.dispatchEvent(args[0]);
+                    });
+                } else {
+                   element.dispatchEvent(args[0]);
+                }
+                
+            }
 
             function update(el, parent, next) {
                 if (parent) {
@@ -659,7 +674,7 @@
                 element.addEventListener(field.replace('on', '').trim(), function (e) {
                     var fn = getFn(e);
                     if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
-                        fn.apply(data, arguments)
+                        fn.apply(data, e.data || arguments)
                     }
                 });
             }
