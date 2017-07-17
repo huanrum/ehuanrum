@@ -1,0 +1,67 @@
+.global-control .global-header {
+    z-index: 1000;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 45px;
+    background: #00AEEF;
+}
+
+.global-control .global-header .menu {
+    z-index: 10;
+    position: absolute;
+    top: 0;
+    width: 25px;
+    height: 25px;
+    padding: 10px;
+}
+
+.global-control .global-header .title {
+    top: 50%;
+    display: block;
+    position: relative;
+    font-size: 16px;
+    line-height: 16px;
+    text-align: center;
+    color: #FFFFFF;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.global-control .global-footer {
+    z-index: 3000;
+    position: fixed;
+    left: 0;
+    bottom: -5px;
+    width: 100%;
+    height: 0;
+}
+
+.global-control .global-footer .left {
+    position: absolute;
+    float: left;
+    width: 52px;
+    height: 58px;
+    bottom: 0;
+    background: url(assets/img/global-controls/control-left.svg);
+}
+
+.global-control .global-footer .right {
+    position: absolute;
+    float: right;
+    width: 52px;
+    height: 58px;
+    right: 0;
+    bottom: 0;
+    background: url(assets/img/global-controls/control-right-blue.svg);
+}
+
+.global-control .global-footer .left img,.global-control .global-footer .right img{
+    margin: 16px 10px;
+}
+
+.ehuanrum-content{
+    position: fixed;
+    top:45px;
+}

@@ -28,21 +28,26 @@
                 goin();
             }
 
-            function goin() {
+            function goin(hideMenu) {
                 //添加菜单和内容显示用的容器,并根据路径初始化界面
-                if (ehuanrum('router')) {
+                if (ehuanrum('router') && !hideMenu) {
                     document.body.appendChild(chaceData.menu);
                     document.body.appendChild(chaceData.content);
                     go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
                 } else {
                     document.body.appendChild(chaceData.content);
                 }
-
+                Object.defineProperty(ehuanrum('router')||{},'goto',{value:go});
             }
 
+            /**
+             * 跳转路由 menu是字符串页面注入名称/一个方法
+             * @param {menu}
+             */
             function go(menu) {
                 //路由跳转
                 if (typeof menu === 'string') {
+                    location.hash = '#' + menu.replace(/^\s*router\./, '/');
                     arguments[0] = routerUrl[menu.replace(/^\s*router\./, '/')];
                     go.apply(this, arguments);
                 } else if (typeof menu === 'function') {
@@ -67,7 +72,15 @@
         return ehuanrum;
     };
 
-    //用来做依赖相关的处理，这是这个框架的入口
+    /**
+     * 用来做依赖相关的处理，这是这个框架的入口,
+     * 如果第一个参数是字符串就表示要注入第二个变量，如果第二个变量不存在就是取值
+     * 如果第一个参数是方法就表示是要添加界面加载完成和关闭界面的时候需要的事件处理
+     * 如果第一个参数是布尔量就表示要设置全局的绑定相关的信息是否显示在界面
+     * 如果第一个参数是数字就表示要设置版本号
+     * @param {*} field 
+     * @param {*} value 
+     */
     function ehuanrum(field, value) {
         field = field || '';
         if (typeof field !== 'string') {
@@ -242,7 +255,6 @@
 
             parent.addEventListener('click', function () {
                 if (location.hash !== '#' + fullHash) {
-                    location.hash = '#' + fullHash;
                     go(fullHash, name);
                 }
             });
@@ -417,7 +429,7 @@
         if (data && !(elements instanceof Array) && !(elements instanceof HTMLElement)) {
             throw new Error('element必须是DOM元素。');
         }
-        
+
         data = data || {};
         initBindingDefineProperty();
         //先扩展element保证后面initBindingElement里面可用
@@ -475,6 +487,7 @@
                 Object.defineProperty(data, '$real', { value: function () { return JSON.parse(JSON.stringify(data) || 'null'); } });
                 Object.defineProperty(data, '$extend', { value: function (newObject, pros) { return _$extend(data, newObject, pros); } });
 
+
                 if (controller) {
                     controller(data, elements);
                 }
@@ -512,18 +525,18 @@
             }).forEach(function (attr) {
                 if (!/:/.test(attr.name) && !/^\[style\./.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
                     $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
-                } else if(/\{\{.*\}\}/.test(attr.value)){
-                    defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g,'').replace(/\}\}/g,''));
-                }else{
-                    defineProperty(element, data, $name(((/^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name))?'on':'')+attr.name.replace(/^[\[\]\(\):@]/g,'').replace(/[\[\]\(\):@]$/g,'')), attr.value);
-                   
+                } else if (/\{\{.*\}\}/.test(attr.value)) {
+                    defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g, '').replace(/\}\}/g, ''));
+                } else {
+                    defineProperty(element, data, $name(((/^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name)) ? 'on' : '') + attr.name.replace(/^[\[\]\(\):@]/g, '').replace(/[\[\]\(\):@]$/g, '')), attr.value);
+
                 }
                 if (!chaceData.binding) {
-                    setTimeout(function(){
-                        if(/^\[.+\]$/.test(attr.name) || /\{\{.*\}\}/.test(attr.value)){
+                    setTimeout(function () {
+                        if (/^\[.+\]$/.test(attr.name) || /\{\{.*\}\}/.test(attr.value)) {
                             element.removeAttribute(attr.name);
                         }
-                    },50);
+                    }, 50);
                 }
             });
 
@@ -533,16 +546,16 @@
 
         function initChildren() {
             Array.prototype.forEach.call(arguments, function (child) {
-                if(child instanceof Element){
-                        if (!child.scope) {
+                if (child instanceof Element) {
+                    if (!child.scope) {
                         binding(child, data);
-                    //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
+                        //DOM元素的孩子是否已经绑定过，绑定过就不要在绑定
                     } else if (child.scope() !== data && data !== window) {
                         child.scope().__proto__ = data;
                         data.$eval(child.scope().$eval);
                     }
-                }else if(/\{\{.*\}\}/.test(child.data)){
-                    defineProperty(child, data, 'data', child.data.replace(/\{\{/g,'').replace(/\}\}/g,''));
+                } else if (/\{\{.*\}\}/.test(child.data)) {
+                    defineProperty(child, data, 'data', child.data.replace(/\{\{/g, '').replace(/\}\}/g, ''));
                 }
             });
         }
@@ -560,20 +573,20 @@
                     update(element, parent, next)
                 }
             };
-            element.$emit = function (type) { 
+            element.$emit = function (type) {
                 var args = Array.prototype.slice.apply(arguments);
-                args[0] =  document.createEvent("HTMLEvents");
-                args[0].initEvent(type,true,true);
+                args[0] = document.createEvent("HTMLEvents");
+                args[0].initEvent(type, true, true);
                 args[0].data = args;
-               
+
                 if (element instanceof Array) {
-                    element.forEach(function(dom){
+                    element.forEach(function (dom) {
                         dom.dispatchEvent(args[0]);
                     });
                 } else {
-                   element.dispatchEvent(args[0]);
+                    element.dispatchEvent(args[0]);
                 }
-                
+
             }
 
             function update(el, parent, next) {
@@ -604,7 +617,7 @@
             Object.keys(replaces).forEach(function (field) {
                 name = name.replace(field, replaces[field]);
             });
-            name = name.split(/[_\-]/).map(function(i){return i[0].toLocaleUpperCase()+i.slice(1);}).join('');
+            name = name.split(/[_\-]/).map(function (i) { return i[0].toLocaleUpperCase() + i.slice(1); }).join('');
             return name[0].toLocaleLowerCase() + name.slice(1);
         }
 
@@ -702,7 +715,7 @@
                     $value(data, value, $value(element, field));
                     data.$eval();
                 });
-                $value(element, field,$value(data, value));
+                $value(element, field, $value(data, value));
             } else {
                 element.addEventListener('click', function (e) {
                     if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
@@ -755,7 +768,7 @@
                     render(extendArray($value(data, value || fields[1])));
                 });
             }
-            if(chaceData.binding){
+            if (chaceData.binding) {
                 binding(document.createComment(element.outerHTML)).update(parentNode, nextSibling);
             }
             render(extendArray($value(data, value || fields[1])));
@@ -816,20 +829,20 @@
 
                 function map(obj, fn) {
                     if ('length' in obj) {
-                        return Array.prototype.map.call(obj, function(v,i,list){
-                            return mapEach(v,i,i,list.length);
+                        return Array.prototype.map.call(obj, function (v, i, list) {
+                            return mapEach(v, i, i, list.length);
                         });
                     } else if (obj && typeof obj === 'object') {
-                        return Array.prototype.map.call(Object.keys(obj), function (k,i,list) {
-                            return mapEach(obj[k], k,i,list.length);
+                        return Array.prototype.map.call(Object.keys(obj), function (k, i, list) {
+                            return mapEach(obj[k], k, i, list.length);
                         });
                     }
                     return [];
 
-                    function mapEach(val,pro,index,count){
-                        var result = {$index: pro};
-                        Object.defineProperty(result,'$first',{value:index === 0});
-                        Object.defineProperty(result,'$last',{value:index+1 === count});
+                    function mapEach(val, pro, index, count) {
+                        var result = { $index: pro };
+                        Object.defineProperty(result, '$first', { value: index === 0 });
+                        Object.defineProperty(result, '$last', { value: index + 1 === count });
                         return fn(val, pro, obj, result);
                     }
                 }

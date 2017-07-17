@@ -30,6 +30,7 @@
                     name: name,
                     index: 0,
                     options : random({id:"[1+1]",name:"[(a-z)6-10]"},10),
+                    csv:'',
                     color: function () {
                         return functions.color(this.index);
                     }
