@@ -201,18 +201,6 @@ window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length || 0;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.dialog',['functions_event','common_drag',function(functions_event,common_drag){
         return function(child,data,controller){
             data = data || {};
@@ -448,6 +436,18 @@ window.$ehr('common.drag', [function () {
     });
 
 })(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
+    });
+
+})(window.$ehr);
 /**
  * Created by Administrator on 2017/3/28.
  */
@@ -635,6 +635,7 @@ window.$ehr('common.drag', [function () {
                     name: name,
                     index: 0,
                     options : random({id:"[1+1]",name:"[(a-z)6-10]"},10),
+                    csv:'',
                     color: function () {
                         return functions.color(this.index);
                     }
