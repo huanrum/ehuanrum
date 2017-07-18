@@ -1,4 +1,5 @@
-$ehr('http', ['global', 'binding', function (global, binding) {
+$ehr('http', ['binding', function (binding) {
+    var baseServiceUrl = 'http://192.168.1.248:8888/vue/mall';
     return function (url, parms) {
         var fullUrl = initParms(url, parms || {});
 
@@ -32,7 +33,7 @@ $ehr('http', ['global', 'binding', function (global, binding) {
             if (!fullUrl) {
                 reject({ message: '参数不完整' });
             }
-            fetch(global.service + fullUrl).then(function (response) {
+            fetch(baseServiceUrl + fullUrl).then(function (response) {
                 loading.update();
                 return response.json();
             }, function (err) {
