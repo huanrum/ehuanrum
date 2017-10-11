@@ -1,5 +1,5 @@
 
-$ehr('$global', [function () {
+ehr('$global', [function () {
     return {
         title: '',
         buttons: [],
@@ -11,7 +11,7 @@ $ehr('$global', [function () {
 /**
  * goin(true) 可以使菜单不显示出来
  */
-$ehr('main', ['router', 'binding', '$global', function (router, binding, $global) {
+ehr('main', ['router', 'binding', '$global', function (router, binding, $global) {
 
     var template = `<div class="global-control">
                         <div class="global-header">

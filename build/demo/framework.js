@@ -5,7 +5,7 @@
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
         typeof define === 'function' && define.amd ? define(factory) :
             (global.ehr = global.$ehr = factory());
-})(this, (function (_eval) {
+})(this, (function (global,_eval) {
     'use strict';
 
     var chaceData = { temp: {}, data: {}, load: [], binding$id: 0 };
@@ -17,7 +17,7 @@
         chaceData.content.className = 'ehuanrum-content';
         //界面加载完成后去主动给界面做数据绑定处理
         window.addEventListener('load', function () {
-            var routerUrl = {}, active = null, paths = location.hash.replace('#', '').split('/');
+            var routerUrl = {}, active = null, history = [],paths = location.hash.replace('#', '').split('/');
             binding(document.body, window);
             //根据对应的router功能构建菜单
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
@@ -28,16 +28,19 @@
                 goin();
             }
 
-            function goin() {
+            function goin(hideMenu,defaultUrl) {
                 //添加菜单和内容显示用的容器,并根据路径初始化界面
-                if (ehuanrum('router')) {
+                if (ehuanrum('router') && !hideMenu) {
                     document.body.appendChild(chaceData.menu);
                     document.body.appendChild(chaceData.content);
-                    go('/' + paths.filter(function (i) { return !!i; }).join('/'), paths.pop() || paths.pop());
                 } else {
                     document.body.appendChild(chaceData.content);
                 }
-
+                if(ehuanrum('router')){
+                    var menu = paths.filter(function (i) { return !!i; }).join('/');
+                    go(menu?('/' + menu):(defaultUrl || 'router.main'), paths.pop() || paths.pop() || 'default');
+                }
+                Object.defineProperty(ehuanrum('router')||{},'goto',{value:go});
             }
 
             /**
@@ -46,7 +49,18 @@
              */
             function go(menu) {
                 //路由跳转
-                if (typeof menu === 'string') {
+                if(typeof menu === 'number'){
+                    var hash = location.hash;
+                    if(menu<0){
+                        hash = history[history.length + menu];
+                    }else{
+                        hash = history[history.lastIndexOf(hash) + menu];
+                    }
+                    arguments[0] = hash.replace('#','') || ('#/no-Found-'+Date.now());
+                    go.apply(this, arguments);
+                }else if (typeof menu === 'string') {
+                    history.push(location.hash);
+                    location.hash = '#' + menu.replace(/^\s*router\./, '/');
                     arguments[0] = routerUrl[menu.replace(/^\s*router\./, '/')];
                     go.apply(this, arguments);
                 } else if (typeof menu === 'function') {
@@ -254,7 +268,6 @@
 
             parent.addEventListener('click', function () {
                 if (location.hash !== '#' + fullHash) {
-                    location.hash = '#' + fullHash;
                     go(fullHash, name);
                 }
             });
@@ -491,7 +504,7 @@
                 if (controller) {
                     controller(data, elements);
                 }
-                if (data === window) { return; }//不给window添加set/get
+                if (data === global) { return; }//不给window/global添加set/get
                 Object.keys(data).filter(function (i) { return typeof data[i] !== 'function' && !(data[i] instanceof Node); }).forEach(function (pro) {
                     var oldVal = data[pro], descriptor = __getOwnPropertyDescriptor(data, pro) || {};
                     Object.defineProperty(data, pro, {
@@ -802,7 +815,7 @@
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
                                 get: function () {
-                                    return map($value(data, fields[1]) || [], function (x) { return '' + x; }).indexOf('' + item);
+                                    return map($value(data, fields[1]) || [], function (x) { return '' + JSON.stringify(x); }).indexOf('' + JSON.stringify(item));
                                 }
                             });
                         }
@@ -852,7 +865,7 @@
     };
 
 
-})(function (_obj, _str, _valuer) {
+})(this,function (_obj, _str, _valuer) {
     with (_obj) {
         return eval(_str);
     }
