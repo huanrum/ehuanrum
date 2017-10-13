@@ -49,7 +49,7 @@
                             for (var i = 1; i < array.length; i++) {
                                 var item = {};
                                 array[0].forEach(function (f, j) {
-                                    item[f] = array[i][j];
+                                item[f.trim().replace(/\s+/g,'_')] = array[i][j];
                                 });
                                 items.push(item);
                             }

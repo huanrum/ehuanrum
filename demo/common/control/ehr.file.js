@@ -14,7 +14,7 @@
                            value(data,field,common_file(file)(reader.result));
                            element.$emit('changefile',value(data,field));
                         };
-                        reader.readAsText(file,'gb2312');
+                        reader.readAsText(file,'UTF-8');
                     }
                 }
             }, element);

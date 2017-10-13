@@ -30,16 +30,20 @@
         function csv_read(data) {
             //字符串为解析,否则为构建
             return data.split(/[\n\b]/).filter(function(i){return !!i.trim();}).map(function (str) {
-                var replaces = /\".*\"/.exec(str) || [];
-                replaces.forEach(function (rep, index) {
-                    str = str.replace(rep, '{{' + index + '}}');
-                });
-                return str.replace(/\r/, '').split(',').map(function (res) {
-                    replaces.forEach(function (rep, index) {
-                        res = res.replace('{{' + index + '}}', rep.slice(1,-1));
-                    });
-                    return res;
-                });
+                var list = [],isPush = 0,temp = '';str.replace(/\r/, '')
+                for(var i=0;i<str.length;i++){
+                    if(str[i] === '"'){
+                        isPush = !isPush;
+                    }
+                    if(!isPush && str[i] === ','){
+                        list.push(temp);
+                        temp = '';
+                    }else{
+                        temp += str[i]; 
+                    }
+                }
+                list.push(temp);
+                return list;
             });
         }
 
