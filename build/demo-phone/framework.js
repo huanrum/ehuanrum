@@ -815,7 +815,7 @@
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
                                 get: function () {
-                                    return map($value(data, fields[1]) || [], function (x) { return '' + x; }).indexOf('' + item);
+                                    return map($value(data, fields[1]) || [], function (x) { return '' + JSON.stringify(x); }).indexOf('' + JSON.stringify(item));
                                 }
                             });
                         }
