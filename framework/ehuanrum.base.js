@@ -19,6 +19,8 @@
         window.addEventListener('load', function () {
             var routerUrl = {}, active = null, history = [],paths = location.hash.replace('#', '').split('/');
             binding(document.body, window);
+            binding(chaceData.menu, window);
+            binding(chaceData.content, window);
             //根据对应的router功能构建菜单
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
             //如果有对应的main处理逻辑就先运行它
@@ -96,7 +98,7 @@
      */
     function ehuanrum(field, value) {
         field = field || '';
-        if (typeof field !== 'string') {
+        if (typeof field !== 'string' || /^\d+$/.test(field)) {
             //如果第一个参数是方法就表示是要添加界面加载完成和关闭界面的时候需要的事件处理
             if (typeof field === 'function' && window) {
                 window.addEventListener('load', field);
@@ -108,7 +110,7 @@
             } else if (typeof field === 'boolean') {
                 chaceData.binding = field;
                 //如果是数字就表示要设置版本号
-            } else if (typeof field === 'number') {
+            } else if (/^\d+$/.test(field)) {
                 chaceData.version = field;
                 //其他的都认为是需要主动做数据双向绑定处理的，最好是DOM元素否则会报错，至于其他类型等以后再加
             } else {
@@ -210,6 +212,20 @@
         return str.split(/\s+/).map(function (c) {
             return c[0].toLocaleUpperCase() + c.slice(1);
         }).join('');
+    }
+
+    function _realValue(){
+        for(var i=0;i<arguments.length;i++){
+            if(arguments[i]){
+                return arguments[i];
+            }
+        }
+        for(var j=0;j<arguments.length;j++){
+            if(arguments[j] !== undefined){
+                return arguments[j];
+            }
+        }
+        
     }
 
     function _event(scope) {
@@ -410,7 +426,7 @@
             }
             return ent;
         }
-    };
+    }
 
     //用作双向绑定的功能部分
     function binding(elements, data, parentNode, controller) {
@@ -499,6 +515,7 @@
                 Object.defineProperty(data, '$eval', { value: _event(data) });
                 Object.defineProperty(data, '$real', { value: function () { return JSON.parse(JSON.stringify(data) || 'null'); } });
                 Object.defineProperty(data, '$extend', { value: function (newObject, pros) { return _$extend(data, newObject, pros); } });
+                Object.defineProperty(data, '$value', { value: function (filed,value) { return $value(data, filed,value); } });
 
 
                 if (controller) {
@@ -539,9 +556,9 @@
                 if (!/:/.test(attr.name) && !/^\[style\./.test(attr.name) && $value(controls, attr.name.slice(1, -1)) && element.parentNode) {
                     $value(controls, attr.name.slice(1, -1).replace(/[_\-]/g, '.')).call({ defineProperty: _descriptorFileds }, element, data, attr.value);
                 } else if (/\{\{.*\}\}/.test(attr.value)) {
-                    defineProperty(element, data, $name(attr.name), attr.value.replace(/\{\{/g, '').replace(/\}\}/g, ''));
+                    defineProperty(element, data, $name(element,attr.name), attr.value.replace(/\{\{/g, '').replace(/\}\}/g, ''));
                 } else {
-                    defineProperty(element, data, $name(((/^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name)) ? 'on' : '') + attr.name.replace(/^[\[\]\(\):@]/g, '').replace(/[\[\]\(\):@]$/g, '')), attr.value);
+                    defineProperty(element, data, $name(element,((/^\(.+\)$/.test(attr.name) || /^@.+$/.test(attr.name)) ? 'on' : '') + attr.name.replace(/^[\[\]\(\):@]/g, '').replace(/[\[\]\(\):@]$/g, '')), attr.value);
 
                 }
                 if (!chaceData.binding) {
@@ -620,18 +637,39 @@
             }
         }
 
-        function $name(name) {
-            var replaces = {
-                class: 'className',
-                fontsize: 'fontSize',
-                innerhtml: 'innerHTML'
-            };
-            var fileds = Object.keys(replaces);
-            Object.keys(replaces).forEach(function (field) {
-                name = name.replace(field, replaces[field]);
-            });
-            name = name.split(/[_\-]/).map(function (i) { return i[0].toLocaleUpperCase() + i.slice(1); }).join('');
-            return name[0].toLocaleLowerCase() + name.slice(1);
+        function $name(element,name) {
+            var fildEl = element;
+            return name.split('.').map(function(n1,i,list){
+                var fildName = getAllName(fildEl).filter(function(n){return toName(n1).toLocaleLowerCase() === n.toLocaleLowerCase();}).pop();
+                if(fildName){
+                    if(i<list.length-1){
+                        fildEl = element[fildName];
+                    }
+                    return fildName;
+                }else{
+                    return n1;
+                }
+            }).join('.');
+
+            function toName(name){
+                var result = name ,replaces = {
+                    class: 'className'
+                };
+                Object.keys(replaces).forEach(function (field) {
+                    result = result.replace(field, replaces[field]);
+                });
+                result = result.split(/[_\-]/).map(function (i) { return i[0].toLocaleUpperCase() + i.slice(1); }).join('');
+                return result[0].toLocaleLowerCase() + result.slice(1);
+            }
+
+            function getAllName(elClass){
+                if(elClass){
+                    return Object.keys(elClass).concat(getAllName(elClass.__proto__));
+                }else{
+                    return [];
+                }
+            }
+
         }
 
         function createElement(string) {
@@ -640,7 +678,7 @@
             return Array.prototype.slice.call(parent.children, 0);
         }
 
-    };
+    }
 
 
 
@@ -686,7 +724,9 @@
                     }
                 });
             }
-            $value(element, field, tempV);
+            if($value(element, field) !== tempV){
+                $value(element, field, tempV);
+            }
         }
 
         //on开头的都被认为是事件
@@ -731,7 +771,7 @@
                 $value(element, field, $value(data, value));
             } else {
                 element.addEventListener('click', function (e) {
-                    if (['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
+                    if (field !== 'value' || ['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
                         $value(data, value, $value(element, field));
                     }
                     e.target.focus();
@@ -749,7 +789,7 @@
                     }
                 },
                 get: function () {
-                    return (field === 'value' && element.value) || (descriptor.get && descriptor.get()) || descriptor.value;
+                    return _realValue((field === 'value' && element.value) , (descriptor.get && descriptor.get()) , descriptor.value);
                 }
             });
         }
@@ -804,7 +844,7 @@
 
             function render(vals) {
                 elements.forEach(function (it) {
-                    if (!vals.some(function (i) { return it.t === i; })) {
+                    if (!Array.prototype.some.call(vals,function (i) { return it.t === i; })) {
                         it.e.update();
                     }
                 });
@@ -841,7 +881,7 @@
                 });
 
                 function map(obj, fn) {
-                    if ('length' in obj) {
+                    if (obj.length) {
                         return Array.prototype.map.call(obj, function (v, i, list) {
                             return mapEach(v, i, i, list.length);
                         });
@@ -862,7 +902,7 @@
             }
         }
 
-    };
+    }
 
 
 })(this,function (_obj, _str, _valuer) {

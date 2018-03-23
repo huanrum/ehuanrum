@@ -52,4 +52,13 @@
         }
     });
 
+    $e('functions.style', function () {
+        var style = document.createElement('style');
+        style.id = 'functions.style';
+        document.head.appendChild(style); 
+        return function (content) {
+            style.innerHTML += '\r\n' + content;
+        };
+    });
+
 })(window.$ehr);

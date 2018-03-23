@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Framework</title>
+
+    <link href="ehuanrum.css" rel="stylesheet">
+
+    <script src="ehuanrum.base.js"></script>
+    <script src="ehuanrum.function.js"></script>
+    <script src="ehuanrum.random.js"></script>
+</head>
+
+<body>
+    <script>
+        $ehr('main', ['binding', function (binding) {
+            return function (go) {
+                binding(
+                    `
+                        <div>
+                            <input [value]="age">
+                            <input type="checkbox" [checked]="all">
+                            <ol>
+                                <li [item:items]><button (click)="remove(item)">Remove</button> <a>{{item}}</a></li>
+                            </ol>
+                            <button (click)="add()">Add</button>
+                        </div>`, {
+                        age: 2,
+                        all: true,
+                        items: []
+                    },
+                    function (scope) {
+                        scope.add = function () {
+                            scope.items.push('' + Date.now());
+                        };
+                        scope.remove = function (v) {
+                            scope.items = scope.items.filter(i => i !== v);
+                        }
+                    });
+                go();
+            };
+        }]);
+    </script>
+</body>
+
+</html>
