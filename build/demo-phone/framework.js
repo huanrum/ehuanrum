@@ -261,7 +261,7 @@
             if (ehuanrum('menuAction')) {
                 return function () {
                     ehuanrum('menuAction')(m, menuSpan, childMenu);
-                }
+                };
             } else {
                 childMenu.style.display = new RegExp('#' + (hash || '') + '/' + m).test(location.hash) ? 'block' : 'none';
                 return function () {
@@ -316,7 +316,7 @@
 
             var td = data;
             fi.split('.').forEach(function (f) {
-                de(td, f);
+                de(td, f.trim());
                 td = td[f] || {};
             });
         });
@@ -338,7 +338,9 @@
                     fn();
                 },
                 get: function () {
-                    return descriptor.get && descriptor.get() || descriptor.value;
+                    return [descriptor.get && descriptor.get() , descriptor.value , $value(td.__proto__, tf)].sort(function(a,b){
+                        return [false,0,'',null,undefined].indexOf(a) - [false,0,'',null,undefined].indexOf(b);
+                    }).shift();
                 }
             });
         }
@@ -348,7 +350,7 @@
     function $value($obj, $field, $value) {
         if (!/^[0-9a-zA-Z\._$@]*$/.test($field)) {
             //计算表达式
-            return _eval($obj, $field, valuer);
+            return _eval($obj, $field.replace(/\s+/mg,' '), valuer);
         } else {
             //取值
             return valuer($obj, $field, $value);
@@ -828,7 +830,7 @@
 
             function extendArray(list) {
                 if (list instanceof Array) {
-                    ['push', 'pop', 'shift', 'unshift'].forEach(function (funName) {
+                    ['push', 'pop', 'shift', 'unshift','sort'].forEach(function (funName) {
                         Object.defineProperty(list, funName, {
                             configurable: true,
                             value: function () {
@@ -838,19 +840,30 @@
                             }
                         });
                     });
+                    Object.defineProperty(list, 'replace', {
+                        configurable: true,
+                        value: function () {
+                            list.length = 0;
+                            Array.prototype.forEach.call(arguments,function(arg){
+                                Array.prototype.push.apply(list, arg||[]);
+                            });
+                            render(list);
+                            return list;
+                        }
+                    });
                 }
                 return list;
             }
 
             function render(vals) {
-                elements.forEach(function (it) {
-                    if (!Array.prototype.some.call(vals,function (i) { return it.t === i; })) {
+                elements.forEach(function (it,index) {
+                    if(vals[index] !== it.t){
                         it.e.update();
                     }
                 });
                 elements = map(vals || [], function (item, i, obj, da) {
-                    var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || {}).e;
-                    if (!bindElement) {
+                    var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || { t: item, e: bindElement });
+                    if (!bindElement.e || bindElement.e.scope().item !== bindElement.t) {
                         if (typeof i === 'number') {
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
@@ -870,14 +883,15 @@
                             }
                         });
                         da.__proto__ = data;
-                        bindElement = binding(outerHTML, da);
-                        data.$eval(da.$eval);
+                        bindElement.e = binding(outerHTML, da);
+                        bindElement.e.update(parentNode, nextSibling);
+                        data.$eval(function(){da.$eval.apply(da,arguments);});
                     } else {
-                        bindElement.scope().$eval();
+                        bindElement.e.update(parentNode);
+                        bindElement.e.scope().$eval();
                     }
-                    bindElement.update(parentNode, nextSibling);
 
-                    return { t: item, e: bindElement };
+                    return bindElement;
                 });
 
                 function map(obj, fn) {

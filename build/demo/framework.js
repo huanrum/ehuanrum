@@ -261,7 +261,7 @@
             if (ehuanrum('menuAction')) {
                 return function () {
                     ehuanrum('menuAction')(m, menuSpan, childMenu);
-                }
+                };
             } else {
                 childMenu.style.display = new RegExp('#' + (hash || '') + '/' + m).test(location.hash) ? 'block' : 'none';
                 return function () {
@@ -316,7 +316,7 @@
 
             var td = data;
             fi.split('.').forEach(function (f) {
-                de(td, f);
+                de(td, f.trim());
                 td = td[f] || {};
             });
         });
@@ -338,9 +338,17 @@
                     fn();
                 },
                 get: function () {
-                    return descriptor.get && descriptor.get() || descriptor.value;
+                    return getRealValue(descriptor.get && descriptor.get() , descriptor.value , $value(td.__proto__, tf));
                 }
             });
+        }
+
+        function getRealValue(){
+            for(var i=0;i<arguments.length;i++){
+                if([undefined,null].indexOf(arguments[i]) !== -1){
+                    return arguments[i];
+                }
+            }
         }
     }
 
@@ -861,7 +869,7 @@
                 });
                 elements = map(vals || [], function (item, i, obj, da) {
                     var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || { t: item, e: bindElement });
-                    if (!bindElement.e) {
+                    if (!bindElement.e || bindElement.e.scope().item !== bindElement.t) {
                         if (typeof i === 'number') {
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
@@ -882,11 +890,12 @@
                         });
                         da.__proto__ = data;
                         bindElement.e = binding(outerHTML, da);
-                        data.$eval(da.$eval);
+                        bindElement.e.update(parentNode, nextSibling);
+                        data.$eval(function(){da.$eval.apply(da,arguments);});
                     } else {
+                        bindElement.e.update(parentNode);
                         bindElement.e.scope().$eval();
                     }
-                    bindElement.e.update(parentNode, nextSibling);
 
                     return bindElement;
                 });
