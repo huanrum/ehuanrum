@@ -25,7 +25,7 @@
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
             //如果有对应的main处理逻辑就先运行它
             if (ehuanrum('main')) {
-                ehuanrum('main')(goin);
+                ehuanrum('main')(goin,chaceData.content);
             } else {
                 goin();
             }
@@ -305,6 +305,30 @@
         return { enumerable: true };
     }
 
+    function _$extendArray(list,render) {
+        ['push', 'pop', 'shift', 'unshift','sort'].forEach(function (funName) {
+            Object.defineProperty(list, funName, {
+                configurable: true,
+                value: function () {
+                    var result = Array.prototype[funName].apply(list, arguments);
+                    render(list);
+                    return result;
+                }
+            });
+        });
+        Object.defineProperty(list, 'replace', {
+            configurable: true,
+            value: function () {
+                list.length = 0;
+                Array.prototype.forEach.call(arguments,function(arg){
+                    Array.prototype.push.apply(list, arg||[]);
+                });
+                render(list);
+                return list;
+            }
+        });
+    }
+
     //计算表达式需要关注里面的每一个变量
     function _descriptorFileds(data, expression, fn) {
         expression.replace(/\'((?!\').)*\'/g, '').split(/[+\-*/%\|\&\(\)=\?\:,!><]/).filter(function (i) { return !!i.trim(); }).forEach(function (fi) {
@@ -338,17 +362,9 @@
                     fn();
                 },
                 get: function () {
-                    return getRealValue(descriptor.get && descriptor.get() , descriptor.value , $value(td.__proto__, tf));
+                    return _realValue(descriptor.get && descriptor.get() , descriptor.value , $value(td.__proto__, tf));
                 }
             });
-        }
-
-        function getRealValue(){
-            for(var i=0;i<arguments.length;i++){
-                if([undefined,null].indexOf(arguments[i]) !== -1){
-                    return arguments[i];
-                }
-            }
         }
     }
 
@@ -379,7 +395,7 @@
                         return obj[field[i]];
                     }
                 }
-                if (!(typeof obj === 'object')) {
+                if (typeof obj !== 'object') {
                     return obj;
                 } else {
                     return null;
@@ -393,7 +409,7 @@
                     obj = fill(obj, fields.shift(), true);
                 }
             }
-            if (!(typeof value === 'undefined')) {
+            if (typeof value !== 'undefined') {
                 fill(obj, fields.shift(), true, value);
             } else {
                 return fill(obj, fields.shift(), false);
@@ -425,7 +441,7 @@
                         ent = ent[v] = ent[v] || [];
                     } else {
                         if (run) {
-                            ent = ent[v] = (!(typeof val === 'undefined') ? val : ent[v] || {});
+                            ent = ent[v] = (typeof val !== 'undefined' ? val : ent[v] || {});
                         } else {
                             return ent[v];
                         }
@@ -511,9 +527,17 @@
                         return tempData;
                     }
                 });
+
+                if(tempData instanceof Array){
+                    _$extendArray(tempData,function(list){
+                        oldObject[from] = list;
+                    });
+                }
             });
             return newObject;
         }
+
+        
 
         function initBindingDefineProperty() {
             if (!data.$eval || (data.$eval === data.__proto__.$eval)) {
@@ -552,6 +576,10 @@
         }
 
         function initBindingElement(element) {
+            if(element.render){return;}
+            element.render = true;
+            setTimeout(function(){delete element.render;},100);
+
             //把[]关起来的属性设置双向绑定
             var controls = ehuanrum('control');
 
@@ -693,6 +721,7 @@
     ///defineProperty,实现双向绑定
     function defineProperty(element, data, field, value) {
         if (!element.parentNode) { return; }
+       
         //关联的element属性名以on开头的都是事件
         if (/^\s*on/.test(field)) {
             events();
@@ -742,13 +771,15 @@
             if (field === 'onload') {
                 var fn = getFn();
                 if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
-                    fn.call(data, element)
+                    fn.call(data, element);
+                    data.$eval();
                 }
             } else {
                 element.addEventListener(field.replace('on', '').trim(), function (e) {
                     var fn = getFn(e);
                     if (/^[0-9a-zA-Z\._$@]*$/.test(value) && fn) {
-                        fn.apply(data, e.data || arguments)
+                        fn.apply(data, e.data || arguments);
+                        data.$eval();
                     }
                 });
             }
@@ -836,41 +867,21 @@
 
             function extendArray(list) {
                 if (list instanceof Array) {
-                    ['push', 'pop', 'shift', 'unshift','sort'].forEach(function (funName) {
-                        Object.defineProperty(list, funName, {
-                            configurable: true,
-                            value: function () {
-                                var result = Array.prototype[funName].apply(list, arguments);
-                                render(list);
-                                return result;
-                            }
-                        });
-                    });
-                    Object.defineProperty(list, 'replace', {
-                        configurable: true,
-                        value: function () {
-                            list.length = 0;
-                            Array.prototype.forEach.call(arguments,function(arg){
-                                Array.prototype.push.apply(list, arg||[]);
-                            });
-                            render(list);
-                            return list;
-                        }
-                    });
+                    _$extendArray(list,render);
                 }
                 return list;
             }
 
             function render(vals) {
                 elements.forEach(function (it,index) {
-                    if(vals[index] !== it.t){
+                    //if(vals[index] !== it.t){
                         it.e.update();
-                    }
+                    //}
                 });
                 elements = map(vals || [], function (item, i, obj, da) {
-                    var bindElement = (elements.filter(function (it) { return it.t === item; })[0] || { t: item, e: bindElement });
+                    var bindElement = null;//(elements.filter(function (it) { return it.t === item; })[0] || { t: item, e: bindElement });
                     if (!bindElement.e || bindElement.e.scope().item !== bindElement.t) {
-                        if (typeof i === 'number') {
+                       if (/^\d+$/.test(i)) {
                             Object.defineProperty(da, '$index', {
                                 enumerable: false,
                                 get: function () {
@@ -882,7 +893,7 @@
                             configurable: true,
                             enumerable: true,
                             get: function () {
-                                return vals[i];
+                                return _realValue(vals[i],item);
                             },
                             set: function (val) {
                                 vals[i] = val;
@@ -901,7 +912,11 @@
                 });
 
                 function map(obj, fn) {
-                    if (obj.length) {
+                    if(/^\d+$/.test(obj)){
+                        return Array(+obj).fill(1).map(function(v, i, list){
+                            return mapEach(i, i, i, list.length);
+                        });
+                    }else if (obj.length) {
                         return Array.prototype.map.call(obj, function (v, i, list) {
                             return mapEach(v, i, i, list.length);
                         });

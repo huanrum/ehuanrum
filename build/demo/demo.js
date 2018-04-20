@@ -201,6 +201,18 @@ window.$ehr('control.my.drag', ['value', 'common_drag', function (value, common_
     'use strict';
 
     //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
+    $e('filter.capitalize',function(){
+        return function(value,index){
+            index = index % value.length || 0;
+            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
+        };
+    });
+
+})(window.$ehr);
+(function ($e) {
+    'use strict';
+
+    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
     $e('common.dialog',['functions_event','common_drag',function(functions_event,common_drag){
         return function(child,data,controller){
             data = data || {};
@@ -440,18 +452,6 @@ window.$ehr('common.drag', [function () {
     });
 
 })(window.$ehr);
-(function ($e) {
-    'use strict';
-
-    //定义自己的功能,由于参数明不能带.所以使用的时候可以用_代替
-    $e('filter.capitalize',function(){
-        return function(value,index){
-            index = index % value.length || 0;
-            return value.slice(0,index) + value[index].toLocaleUpperCase() + value.slice(index+1);
-        };
-    });
-
-})(window.$ehr);
 /**
  * Created by Administrator on 2017/3/28.
  */
@@ -573,6 +573,39 @@ window.$ehr('common.drag', [function () {
 
 })(window.$ehr);
 
+
+/**
+ * Created by Administrator on 2017/3/28.
+ */
+(function ($e) {
+    'use strict';
+
+    //界面上的菜单数据以及路由和界面,必须以router.开头
+    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
+
+        return function (name) {
+            return common_page([
+               '<div [my.grid]="items"></div>'
+            ].join(''),{
+                    title:'Learn',
+                    items:service_learn.get(),
+                    select:function(){
+                        service_learn.select(this.item);
+                    }
+            });
+        };
+    }]);
+
+     $e('service.learn', ['common_service',function (common_service) {
+
+        var service = common_service({fields:['id','name','value','date']});
+        service.load();
+        return service;
+
+    }]);
+
+
+})(window.$ehr);
 
 /**
  * Created by Administrator on 2017/3/28.
@@ -706,39 +739,6 @@ window.$ehr('common.drag', [function () {
 
             return binding;
         };
-    }]);
-
-
-})(window.$ehr);
-
-/**
- * Created by Administrator on 2017/3/28.
- */
-(function ($e) {
-    'use strict';
-
-    //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.learn', ['common_page','service_learn',function (common_page,service_learn) {
-
-        return function (name) {
-            return common_page([
-               '<div [my.grid]="items"></div>'
-            ].join(''),{
-                    title:'Learn',
-                    items:service_learn.get(),
-                    select:function(){
-                        service_learn.select(this.item);
-                    }
-            });
-        };
-    }]);
-
-     $e('service.learn', ['common_service',function (common_service) {
-
-        var service = common_service({fields:['id','name','value','date']});
-        service.load();
-        return service;
-
     }]);
 
 

@@ -25,7 +25,7 @@
             chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
             //如果有对应的main处理逻辑就先运行它
             if (ehuanrum('main')) {
-                ehuanrum('main')(goin);
+                ehuanrum('main')(goin,chaceData.content);
             } else {
                 goin();
             }
