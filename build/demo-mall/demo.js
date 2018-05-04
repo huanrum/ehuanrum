@@ -299,6 +299,34 @@ $ehr('control.my.label.value', ['binding', function (binding) {
     }
 }]);
 
+$ehr('filter.capitalize', function () {
+    return function (value, index) {
+        index = index % value.length || 0;
+        return value.slice(0, index) + value[index].toLocaleUpperCase() + value.slice(index + 1);
+    };
+});
+
+
+$ehr('filter.lookup', ['http', function (http) {
+    var lookupData = {};
+    [
+        '/book/lookup'
+    ].forEach(function (lookupUrl) {
+        http(lookupUrl).then(function (req) {
+            Object.keys(req.data).forEach(function (key) {
+                var items = {};
+                req.data[key].forEach(function (item) {
+                    items[item.id] = item.name;
+                })
+                lookupData[key] = items;
+            });
+        });
+    });
+    return function (value, type) {
+        return lookupData[type] && lookupData[type][value] || value;
+    };
+}]);
+
 $ehr('common.dialog', ['binding',function (binding) {
     return function (child, data) {
         data = data || {};
@@ -455,34 +483,6 @@ $ehr('common.service', ['http', 'functions.event', function (http, functions_eve
         };
         service.get(page);
         return service;
-    };
-}]);
-
-$ehr('filter.capitalize', function () {
-    return function (value, index) {
-        index = index % value.length || 0;
-        return value.slice(0, index) + value[index].toLocaleUpperCase() + value.slice(index + 1);
-    };
-});
-
-
-$ehr('filter.lookup', ['http', function (http) {
-    var lookupData = {};
-    [
-        '/book/lookup'
-    ].forEach(function (lookupUrl) {
-        http(lookupUrl).then(function (req) {
-            Object.keys(req.data).forEach(function (key) {
-                var items = {};
-                req.data[key].forEach(function (item) {
-                    items[item.id] = item.name;
-                })
-                lookupData[key] = items;
-            });
-        });
-    });
-    return function (value, type) {
-        return lookupData[type] && lookupData[type][value] || value;
     };
 }]);
 

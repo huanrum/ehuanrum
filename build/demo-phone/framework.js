@@ -11,6 +11,7 @@
     var chaceData = { temp: {}, data: {}, load: [], binding$id: 0 };
 
     if (window) {
+        chaceData.promise = [];
         chaceData.menu = document.createElement('div');
         chaceData.content = document.createElement('div');
         chaceData.menu.className = 'ehuanrum-menu';
@@ -18,17 +19,19 @@
         //界面加载完成后去主动给界面做数据绑定处理
         window.addEventListener('load', function () {
             var routerUrl = {}, active = null, history = [],paths = location.hash.replace('#', '').split('/');
-            binding(document.body, window);
-            binding(chaceData.menu, window);
-            binding(chaceData.content, window);
-            //根据对应的router功能构建菜单
-            chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
-            //如果有对应的main处理逻辑就先运行它
-            if (ehuanrum('main')) {
-                ehuanrum('main')(goin,chaceData.content);
-            } else {
-                goin();
-            }
+            Promise.all(chaceData.promise).then(function(){
+                binding(document.body, window);
+                binding(chaceData.menu, window);
+                binding(chaceData.content, window);
+                //根据对应的router功能构建菜单
+                chaceData.menu.appendChild(__createMenu(ehuanrum('router') || {}, routerUrl, go, ''));
+                //如果有对应的main处理逻辑就先运行它
+                if (ehuanrum('main')) {
+                    ehuanrum('main')(goin,chaceData.content);
+                } else {
+                    goin();
+                }
+            });
 
             function goin(hideMenu,defaultUrl) {
                 //添加菜单和内容显示用的容器,并根据路径初始化界面
@@ -112,9 +115,12 @@
                 //如果是数字就表示要设置版本号
             } else if (/^\d+$/.test(field)) {
                 chaceData.version = field;
-                //其他的都认为是需要主动做数据双向绑定处理的，最好是DOM元素否则会报错，至于其他类型等以后再加
+                //如果是数组就表示要加载文件
+            } else if(field instanceof Array){
+                chaceData.promise.push(chaceData.loadFile(field));
             } else {
-                binding(field, value)
+                //其他的都认为是需要主动做数据双向绑定处理的，最好是DOM元素否则会报错，至于其他类型等以后再加
+                binding(field, value);
             }
             return;
         }
@@ -204,6 +210,41 @@
                 }
             }
             return true;
+        }
+
+        return function(url){
+            return new Promise(function(resolve){
+                if(url instanceof Array){
+                    Promise.all(url.map(function(u){return load(u);})).then(resolve);
+                }else{
+                    load(url).then(resolve);
+                }
+            });
+        };
+        
+        
+        function loadFile(urls){
+            return new Promise(function(resolve){
+                Promise.all(url.map(function(u){return load(u);})).then(resolve);
+            })
+            function load(url){
+            return new Promise(function(resolve){
+                if(/\.js$/.test(url) || /^https?:\/\//.test(url)){
+                    var script = document.createElement('script');
+                    script.src = url;
+                    script.onload = resolve;
+                    document.body.appendChild(script);
+                }else if(/\.css$/.test(url)){
+                    var style = document.createElement('link');
+                    style.type = 'text/css';
+                    style.rel = 'stylesheet';
+                    style.href = url;
+                    style.onload = resolve;
+                    document.head.appendChild(style);
+                }else{
+                    resolve();
+                }
+            });
         }
     }
 
