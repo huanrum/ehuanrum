@@ -5,7 +5,7 @@
     'use strict';
 
     //界面上的菜单数据以及路由和界面,必须以router.开头
-    $e('router.work.binding', ['common_page', 'common_dialog', 'functions','random', function (common_page, common_dialog, functions,random) {
+    $e('router.work.binding', ['common_page', 'common_dialog', 'functions','common.random', function (common_page, common_dialog, functions,random) {
 
         return function (name) {
             var binding = common_page([

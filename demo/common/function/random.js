@@ -5,7 +5,7 @@
     'use strict';
 
     //功能部分
-    $e('random', function () {
+    $e('common.random', function () {
         var chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         //根据传入的模型对象构建出一个完整的对象
         //第二个参数是产生数组的 例如 3-5 表示生成数组长度3-5

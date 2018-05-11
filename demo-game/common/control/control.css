@@ -1,0 +1,82 @@
+/*my-login*/
+.my-login{
+    text-align: center;
+    border: 1px solid #e3e3e3;
+}
+.my-login>*{
+    padding: 1em
+}
+
+/*my-grid*/
+.table-header .table-row>*,.table-body .table-row>*{
+    display: inline-block;
+    width: 10rem;
+    padding: 0.5rem;
+    border-right: 1px solid #e3e3e3;
+}
+.table-header{
+    font-size: 1.2rem;
+    color:#ffffff;
+    background: #666699;
+}
+.table-body .table-row{
+    border: 1px solid #d3d3d3;
+}
+.table-body .table-row>*{
+    background: #f3f3f3;
+}
+.table-body .table-row:nth-child(2n),.table-body .table-row:nth-child(2n)>*{
+    background: #d3d3d3;
+}
+.table-body .table-row:hover{
+    opacity: 0.8;
+}
+.table-body .table-row>*:hover{
+    background: #99f399;
+}
+
+/*my-grid-menu*/
+.my-grid-menu{
+    margin: 0.5em 0;
+    text-align: center;
+    list-style: none;
+}
+.my-grid-menu>li{
+    display: inline-block;
+    line-height: 1.2em;
+    margin: 0;
+    padding: 0.2em 0.4em;
+    border: 1px solid #666699;
+}
+.my-grid-menu>li.active{
+    background: #666699;
+}
+.my-grid-menu>li>*{
+    border: none;
+    max-width: 2em;
+}
+.my-grid-menu>li>*.disable{
+    color:#d3d3d3;
+    cursor: not-allowed;
+}
+
+/*my-form*/
+.form-body .form-row{
+    padding: 0.5em 0;
+}
+.form-body .form-row>*{
+    display: inline-block;
+    width:100%;
+}
+
+
+/*my-label-value*/
+.label-value label{
+    display: inline-block;
+    width: 30%;
+    font-weight: bold;
+}
+.label-value div,.label-value input,.label-value select{
+    display: inline-block;
+    width: calc(70% - 2em);
+}
