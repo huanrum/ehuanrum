@@ -15,9 +15,9 @@
 
 <body>
     <script>
-        $ehr('main', ['binding', function (binding) {
-            return function (go) {
-                binding(
+        $ehr('router.demo1', ['binding', function (binding) {
+            return function () {
+                return binding(
                     `
                         <div>
                             <input [value]="age">
@@ -39,9 +39,42 @@
                             scope.items = scope.items.filter(i => i !== v);
                         }
                     });
-                go();
-            };
+            }
         }]);
+
+        $ehr('router.demo2', [function () {
+            var data = {
+                age: 2,
+                all: true,
+                items: []
+            };
+            return function (name, parentNode) {
+                var element = document.createElement('div');
+                parentNode.appendChild(element);
+                element.innerHTML =
+                    `
+                            <input [value]="age" [onkeyup]="keyup">
+                            <div>你输入的是<span>{{age}}</span></div>
+                            <input type="checkbox" [checked]="all">
+                            <ol>
+                                <li [item:items]><button (click)="remove(item)">Remove</button> <a>{{item}}</a></li>
+                            </ol>
+                            <button (click)="add()">Add</button>
+                `;
+                return $ehr(element, data,
+                    function (scope) {
+                        scope.add = function () {
+                            scope.items.push('' + Date.now());
+                        };
+                        scope.remove = function (v) {
+                            scope.items = scope.items.filter(i => i !== v);
+                        };
+                        scope.keyup = function(){
+                            console.log(scope);
+                        };
+                    });
+            }
+        }])
     </script>
 </body>
 

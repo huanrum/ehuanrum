@@ -55,7 +55,7 @@
                     var menu = paths.filter(function (i) {
                         return !!i;
                     }).join('/');
-                    go(menu ? ('/' + menu) : (defaultUrl || 'router.main'), paths.pop() || paths.pop() || 'default');
+                    go(menu ? ('/' + menu) : (defaultUrl || 'router.main'), paths.pop() || paths.pop() || 'default',chaceData.content);
                 }
                 Object.defineProperty(ehuanrum('router') || {}, 'goto', {
                     value: go
@@ -177,7 +177,7 @@
                 //如果是数组就表示要加载文件
             } else {
                 //其他的都认为是需要主动做数据双向绑定处理的，最好是DOM元素否则会报错，至于其他类型等以后再加
-                binding(field, value);
+                binding.apply(null,arguments);
             }
             return;
         }
@@ -361,7 +361,7 @@
 
             parent.addEventListener('click', function () {
                 if (location.hash !== '#' + fullHash) {
-                    go(fullHash, name);
+                    go(fullHash, name, chaceData.content);
                 }
             });
             router[fullHash] = menu;
@@ -557,7 +557,7 @@
         if (typeof elements === 'string') {
             elements = createElement(elements);
             elements.forEach(function (element) {
-                (parentNode || chaceData.content).appendChild(element)
+                (parentNode || chaceData.content).appendChild(element);
             });
         }
         if (data && !(elements instanceof Array) && !(elements instanceof HTMLElement)) {
@@ -645,8 +645,13 @@
                     }
                 });
                 Object.defineProperty(data, '$value', {
-                    value: function (filed, value) {
-                        return $value(data, filed, value);
+                    value: function (field, value) {
+                        return $value(data, field, value);
+                    }
+                });
+                Object.defineProperty(data, '$watch', {
+                    value: function (field, fn) {
+                        _descriptorFileds(data,field,fn);
                     }
                 });
 
@@ -1049,7 +1054,7 @@
                 });
 
                 function map(obj, fn) {
-                    if (/^\d+$/.test(obj)) {
+                    if (/^\d+$/.test(obj) && typeof obj !== 'object') {
                         return Array(+obj).fill(1).map(function (v, i, list) {
                             return mapEach(i, i, i, list.length);
                         });
@@ -1085,7 +1090,7 @@
 
 })(this, function (_obj, _str, _value) {
     with(_obj) {
-        if(_value===undefined){
+        if(_value===undefined || !/^[0-9a-zA-Z\._$@]*$/.test(_str)){
             return eval(_str);
         }else {
             eval(_str + '=' + getValue(_value));
