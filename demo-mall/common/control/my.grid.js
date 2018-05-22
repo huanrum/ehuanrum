@@ -6,7 +6,7 @@ $ehr('control.my.grid', ['binding', 'value', 'common_dialog', function (binding,
             show: function (item) {
                 common_dialog('<div [my.form]="item" style="width:20em;"></div>', {
                     title: '展示一条数据', item: item, buttons: {
-                        'ok': function () { common_dialog('提交数据')(this.$close); },
+                        'ok': function () { common_dialog('提交数据');this.$close(); },
                         'cancel': function () { this.$close(); }
                     }
                 });

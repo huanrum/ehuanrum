@@ -421,7 +421,7 @@
 
             var td = data;
             fi.split('.').forEach(function (f) {
-                de(td, f.trim());
+                de(td, f.trim(),$value(td, f.trim()));
                 td = td[f] || {};
             });
         });
@@ -429,7 +429,7 @@
             fn();
         }, 500);
 
-        function de(td, tf) {
+        function de(td, tf, va) {
             var descriptor = __getOwnPropertyDescriptor(td, tf);
             Object.defineProperty(td, tf, {
                 configurable: true,
@@ -440,10 +440,12 @@
                     } else {
                         descriptor.value = val;
                     }
+                    va = val;
                     fn();
                 },
                 get: function () {
-                    return _realValue(descriptor.get && descriptor.get(), descriptor.value, $value(td.__proto__, tf));
+                    return va;
+                    //return _realValue(descriptor.get && descriptor.get(), descriptor.value, $value(td.__proto__, tf));
                 }
             });
         }
@@ -580,13 +582,14 @@
         data.$eval();
         return elements;
 
-        function _$extend(oldObject, newObject, pros) {
+        function _$extend(oldObject, newObject, pros, callback) {
             var fromPros = pros,
                 toPros = pros;
             if (!(pros instanceof Array)) {
                 fromPros = Object.keys(pros);
                 toPros = Object.values(pros);
             }
+            callback = callback || function(){};
             toPros.forEach(function (to, i) {
                 var from = fromPros[i],
                     tempData = $value(oldObject, from);
@@ -605,6 +608,7 @@
                     enumerable: true,
                     set: function (val) {
                         tempData = val;
+                        callback();
                     },
                     get: function () {
                         return tempData;
@@ -641,7 +645,7 @@
                 });
                 Object.defineProperty(data, '$extend', {
                     value: function (newObject, pros) {
-                        return _$extend(data, newObject, pros);
+                        return _$extend.apply(null,[data].concat(Array.prototype.splice.call(arguments,0)));
                     }
                 });
                 Object.defineProperty(data, '$value', {
@@ -960,7 +964,8 @@
                 $value(element, field, $value(data, value));
             } else {
                 element.addEventListener('click', function (e) {
-                    if (field !== 'value' || ['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1) {
+                    var regExp = /\|\s*[0-9a-zA-Z_$@]+\s*\(?\S*\)?/g;
+                    if (/^\s*[0-9a-zA-Z_$@\.\[\]]+\s*$/.test(value) && (field !== 'value' || ['INPUT', 'SELECT', 'TEXTAREA'].indexOf(e.target.nodeName) === -1)) {
                         $value(data, value, $value(element, field));
                     }
                     e.target.focus();

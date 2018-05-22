@@ -159,6 +159,146 @@ $ehr('main',['global',function(global){
 
 }]);
 
+$ehr('control.my.form', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
+    return function (element, data, field) {
+        var newData = data.$extend({}, [field]);
+        Object.defineProperty(newData, 'fields', {
+            configurable: true,
+            enumerable: false,
+            get: function () {
+                return Object.keys(value(data, field));
+            }
+        });
+
+        binding([
+            '   <div class="form-body">',
+            '       <div [field:fields] class="form-row" [my.label.value]="' + field + ':field">',
+            '       </div>',
+            '   </div>',
+        ].join(''), newData, element);
+    }
+}]);
+
+$ehr('control.my.grid', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
+    return function (element, data, field) {
+        var oldColumns = [], newData = data.$extend({
+            select: data.select,
+            show: function (item) {
+                common_dialog('<div [my.form]="item" style="width:20em;"></div>', {
+                    title: '展示一条数据', item: item, buttons: {
+                        'ok': function () { common_dialog('提交数据');this.$close(); },
+                        'cancel': function () { this.$close(); }
+                    }
+                });
+            }
+        }, [field]);
+        Object.defineProperty(newData, 'columns', {
+            configurable: true,
+            enumerable: false,
+            set: function (v) { oldColumns = v; },
+            get: function () {
+                var columns = [];
+                (value(data, field) || []).forEach(function (it) {
+                    Object.keys(it).forEach(function (k) {
+                        if (columns.indexOf(k) === -1) {
+                            columns.push(k);
+                        }
+                    });
+                });
+                if (Object.keys(oldColumns).join() !== Object.keys(columns).join()) {
+                    newData.columns = columns;
+                }
+                return columns;
+            }
+        });
+
+        binding([
+            '<div >',
+            '   <div class="table-header">',
+            '       <div class="table-row">',
+            '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
+            '       </div>',
+            '   </div>',
+            '   <div class="table-body">',
+            '       <div [item:items] class="table-row" [ondblclick]="show(item)" [onclick]="select">',
+            '           <div [column:columns] [class]="\'cell-\' + $index" [innerHTML]="item[column]|lookup(column)"></div>',
+            '       </div>',
+            '   </div>',
+            '</div>'
+        ].join(''), newData, element);
+    }
+}]);
+
+$ehr('control.my.grid.menu', ['binding', 'value', function (binding, value) {
+
+    function toArray(scope, total) {
+        var befor = [], after = [];
+        for (var i = 0; i < Math.floor(total / 2); i++) {
+            befor.push(i + 1);
+        }
+        for (var i = Math.floor(total / 2); i < total; i++) {
+            after.push(i + 1);
+        }
+        scope.befors = befor;
+        scope.afters = after;
+    }
+    return function (element, data, field) {
+        var page = field.split(':')[0], update = field.split(':')[1];
+        var totalPage = value(data, field.split(':')[0] + '.totalPage') || 1;
+        var newData = data.$extend({
+            befors: [], afters: [],
+            goto: function (num) {
+                if (num === true) {
+                    num = Math.min(+ value(data, field.split(':')[0] + '.pageNumber') + 1, value(data, field.split(':')[0] + '.totalPage'));
+                } else if (num === false) {
+                    num = + Math.max(value(data, field.split(':')[0] + '.pageNumber') - 1, 1);
+                }
+                if (/^\d+$/.test(num)) {
+                    if (num > -1 && num - 1 < value(data, field.split(':')[0] + '.totalPage') && ('' + num) !== value(data, field.split(':')[0] + '.pageNumber')) {
+                        value(data, field.split(':')[0] + '.pageNumber', num);
+                        value(data, field.split(':')[1])();
+                    }
+                }
+            }
+        }, field.split(':'));
+
+        Object.defineProperty(value(data, field.split(':')[0]), 'totalPage', {
+            configurable: true,
+            get: function () { return totalPage; },
+            set: function (value) {
+                totalPage = value;
+                toArray(newData, value);
+            }
+        });
+        toArray(newData, value(data, field.split(':')[0] + '.totalPage'))
+        binding([
+            '   <ul class="my-grid-menu">',
+            '       <li><span [onclick]="goto(1)" [class]="(+@page@.pageNumber)===1&&\'disable\'">First</span></li>',
+            '       <li><span [onclick]="goto(false)" [class]="(+@page@.pageNumber)<2&&\'disable\'">Prev</span></li>',
+            '       <li [item:befors] [class]="(+@page@.pageNumber)===(+item)&&\'active\'"><span [onclick]="goto(item)" [innerHTML]="item"></span></li>',
+            '       <li [style.display]="@page@.totalPage<11?\'none\':\'inline-block\'"><input [value]="@page@.pageNumber" [onkeyup]="goto(@page@.pageNumber)"></li>',
+            '       <li [item:afters] [class]="(+@page@.pageNumber)===(+item)&&\'active\'"><span [onclick]="goto(item)" [innerHTML]="item"></span></li>',
+            '       <li><span [onclick]="goto(true)" [class]="(+@page@.pageNumber)>(+@page@.totalPage-1)&&\'disable\'">Next</span></li>',
+            '       <li><span [onclick]="goto(@page@.totalPage)" [class]="(+@page@.pageNumber)===(+@page@.totalPage)&&\'disable\'">Last</span></li>',
+            '   </ul>',
+        ].join('').replace(/@page@/g, field.split(':')[0]), newData, element);
+    }
+}]);
+
+$ehr('control.my.label.value', ['binding', function (binding) {
+    return function (element, data, field) {
+        var newData = data.$extend({}, field.split(':'));
+
+        binding([
+            '   <div class="label-value">',
+            '       <label [innerHTML]="field"></label>',
+            '       <div [innerHTML]="item[field]|lookup(field)"></div>',
+            '   </div>',
+        ].join('').replace(/item/g, field.split(':')[0]).replace(/field/g, field.split(':')[1]),
+            newData, element);
+    }
+}]);
+
 $ehr('filter.capitalize', function () {
     return function (value, index) {
         index = index % value.length || 0;
@@ -346,201 +486,6 @@ $ehr('common.service', ['http', 'functions.event', function (http, functions_eve
     };
 }]);
 
-$ehr('control.my.form', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
-    return function (element, data, field) {
-        var newData = data.$extend({}, [field]);
-        Object.defineProperty(newData, 'fields', {
-            configurable: true,
-            enumerable: false,
-            get: function () {
-                return Object.keys(value(data, field));
-            }
-        });
-
-        binding([
-            '   <div class="form-body">',
-            '       <div [field:fields] class="form-row" [my.label.value]="' + field + ':field">',
-            '       </div>',
-            '   </div>',
-        ].join(''), newData, element);
-    }
-}]);
-
-$ehr('control.my.grid', ['binding', 'value', 'common_dialog', function (binding, value, common_dialog) {
-    return function (element, data, field) {
-        var oldColumns = [], newData = data.$extend({
-            select: data.select,
-            show: function (item) {
-                common_dialog('<div [my.form]="item" style="width:20em;"></div>', {
-                    title: '展示一条数据', item: item, buttons: {
-                        'ok': function () { common_dialog('提交数据')(this.$close); },
-                        'cancel': function () { this.$close(); }
-                    }
-                });
-            }
-        }, [field]);
-        Object.defineProperty(newData, 'columns', {
-            configurable: true,
-            enumerable: false,
-            set: function (v) { oldColumns = v; },
-            get: function () {
-                var columns = [];
-                (value(data, field) || []).forEach(function (it) {
-                    Object.keys(it).forEach(function (k) {
-                        if (columns.indexOf(k) === -1) {
-                            columns.push(k);
-                        }
-                    });
-                });
-                if (Object.keys(oldColumns).join() !== Object.keys(columns).join()) {
-                    newData.columns = columns;
-                }
-                return columns;
-            }
-        });
-
-        binding([
-            '<div >',
-            '   <div class="table-header">',
-            '       <div class="table-row">',
-            '           <div [column:columns] [innerHTML]="column|capitalize" [class]="\'cell-\' + $index"></div>',
-            '       </div>',
-            '   </div>',
-            '   <div class="table-body">',
-            '       <div [item:items] class="table-row" [ondblclick]="show(item)" [onclick]="select">',
-            '           <div [column:columns] [class]="\'cell-\' + $index" [innerHTML]="item[column]|lookup(column)"></div>',
-            '       </div>',
-            '   </div>',
-            '</div>'
-        ].join(''), newData, element);
-    }
-}]);
-
-$ehr('control.my.grid.menu', ['binding', 'value', function (binding, value) {
-
-    function toArray(scope, total) {
-        var befor = [], after = [];
-        for (var i = 0; i < Math.floor(total / 2); i++) {
-            befor.push(i + 1);
-        }
-        for (var i = Math.floor(total / 2); i < total; i++) {
-            after.push(i + 1);
-        }
-        scope.befors = befor;
-        scope.afters = after;
-    }
-    return function (element, data, field) {
-        var page = field.split(':')[0], update = field.split(':')[1];
-        var totalPage = value(data, field.split(':')[0] + '.totalPage') || 1;
-        var newData = data.$extend({
-            befors: [], afters: [],
-            goto: function (num) {
-                if (num === true) {
-                    num = Math.min(+ value(data, field.split(':')[0] + '.pageNumber') + 1, value(data, field.split(':')[0] + '.totalPage'));
-                } else if (num === false) {
-                    num = + Math.max(value(data, field.split(':')[0] + '.pageNumber') - 1, 1);
-                }
-                if (/^\d+$/.test(num)) {
-                    if (num > -1 && num - 1 < value(data, field.split(':')[0] + '.totalPage') && ('' + num) !== value(data, field.split(':')[0] + '.pageNumber')) {
-                        value(data, field.split(':')[0] + '.pageNumber', num);
-                        value(data, field.split(':')[1])();
-                    }
-                }
-            }
-        }, field.split(':'));
-
-        Object.defineProperty(value(data, field.split(':')[0]), 'totalPage', {
-            configurable: true,
-            get: function () { return totalPage; },
-            set: function (value) {
-                totalPage = value;
-                toArray(newData, value);
-            }
-        });
-        toArray(newData, value(data, field.split(':')[0] + '.totalPage'))
-        binding([
-            '   <ul class="my-grid-menu">',
-            '       <li><span [onclick]="goto(1)" [class]="(+@page@.pageNumber)===1&&\'disable\'">First</span></li>',
-            '       <li><span [onclick]="goto(false)" [class]="(+@page@.pageNumber)<2&&\'disable\'">Prev</span></li>',
-            '       <li [item:befors] [class]="(+@page@.pageNumber)===(+item)&&\'active\'"><span [onclick]="goto(item)" [innerHTML]="item"></span></li>',
-            '       <li [style.display]="@page@.totalPage<11?\'none\':\'inline-block\'"><input [value]="@page@.pageNumber" [onkeyup]="goto(@page@.pageNumber)"></li>',
-            '       <li [item:afters] [class]="(+@page@.pageNumber)===(+item)&&\'active\'"><span [onclick]="goto(item)" [innerHTML]="item"></span></li>',
-            '       <li><span [onclick]="goto(true)" [class]="(+@page@.pageNumber)>(+@page@.totalPage-1)&&\'disable\'">Next</span></li>',
-            '       <li><span [onclick]="goto(@page@.totalPage)" [class]="(+@page@.pageNumber)===(+@page@.totalPage)&&\'disable\'">Last</span></li>',
-            '   </ul>',
-        ].join('').replace(/@page@/g, field.split(':')[0]), newData, element);
-    }
-}]);
-
-$ehr('control.my.label.value', ['binding', function (binding) {
-    return function (element, data, field) {
-        var newData = data.$extend({}, field.split(':'));
-
-        binding([
-            '   <div class="label-value">',
-            '       <label [innerHTML]="field"></label>',
-            '       <div [innerHTML]="item[field]|lookup(field)"></div>',
-            '   </div>',
-        ].join('').replace(/item/g, field.split(':')[0]).replace(/field/g, field.split(':')[1]),
-            newData, element);
-    }
-}]);
-
-$ehr('router.book.math',['common_page','book_math_service',function(common_page,data_service){
-
-    return function(){
-         return common_page(null,{title : 'Math'},data_service);
-    };
-
-}]);
-
-$ehr('book.math.service',['common_service',function(common_service){
-
-    return common_service({url:'/book/math'});
-
-}]);
-
-$ehr('router.book.story',['common_page','book_story_service',function(common_page,data_service){
-
-    return function(){
-        return common_page(null,{title : 'Story'},data_service);
-    };
-
-}]);
-
-$ehr('book.story.service',['common_service',function(common_service){
-
-    return common_service({url:'/book/story'});
-
-}]);
-
-$ehr('router.home',['common_page',function(common_page){
-
-    var template = [
-        '<div>{brief}</div>',
-        '<br>',
-        '<div>{info}</div>',
-        '<br>',
-        '<hr>',
-        '<div>{contact}</div>'
-    ].join('');
-
-    return function(){
-        return common_page(template,{title : 'Home'},function(data){
-            data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
-            data.info = [
-                '此项目中主要包含两个分块：商品展示和商品管理。',
-                '   商品展示：用户可以浏览所有商品，都可以点击购买，加入购物车，查看相信信息等等。',
-                '   商品管理：商场管理人员查看销售情况以及库存信息，分析商品的销售趋势，以便于后期的囤货。',
-                '   ',
-                '   '
-            ].join('<br>');
-            data.contact = 'email: <i>huanrum@126.com</i>';
-        });
-    };
-
-}]);
-
 $ehr('personal', ['binding', 'global','common_dialog', function (binding, $global,common_dialog) {
 
     var clientId = Date.now(), template = [
@@ -646,5 +591,60 @@ $ehr('personal', ['binding', 'global','common_dialog', function (binding, $globa
             ].join(''), data);
         }
     }
+
+}]);
+
+$ehr('router.home',['common_page',function(common_page){
+
+    var template = [
+        '<div>{brief}</div>',
+        '<br>',
+        '<div>{info}</div>',
+        '<br>',
+        '<hr>',
+        '<div>{contact}</div>'
+    ].join('');
+
+    return function(){
+        return common_page(template,{title : 'Home'},function(data){
+            data.brief = '这是一个模拟网络商场以及产品管理的项目，里面主要包含用户个人信息，商品展示，购物车等等';
+            data.info = [
+                '此项目中主要包含两个分块：商品展示和商品管理。',
+                '   商品展示：用户可以浏览所有商品，都可以点击购买，加入购物车，查看相信信息等等。',
+                '   商品管理：商场管理人员查看销售情况以及库存信息，分析商品的销售趋势，以便于后期的囤货。',
+                '   ',
+                '   '
+            ].join('<br>');
+            data.contact = 'email: <i>huanrum@126.com</i>';
+        });
+    };
+
+}]);
+
+$ehr('router.book.math',['common_page','book_math_service',function(common_page,data_service){
+
+    return function(){
+         return common_page(null,{title : 'Math'},data_service);
+    };
+
+}]);
+
+$ehr('book.math.service',['common_service',function(common_service){
+
+    return common_service({url:'/book/math'});
+
+}]);
+
+$ehr('router.book.story',['common_page','book_story_service',function(common_page,data_service){
+
+    return function(){
+        return common_page(null,{title : 'Story'},data_service);
+    };
+
+}]);
+
+$ehr('book.story.service',['common_service',function(common_service){
+
+    return common_service({url:'/book/story'});
 
 }]);
