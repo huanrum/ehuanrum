@@ -665,13 +665,16 @@
                 }
                 if (data === global) {
                     return;
-                } //不给window/global添加set/get
+                }
+
+                //不给window/global添加set/get
                 Object.keys(data).filter(function (i) {
                     return typeof data[i] !== 'function' && !(data[i] instanceof Node);
                 }).forEach(function (pro) {
                     var oldVal = data[pro],
                         descriptor = __getOwnPropertyDescriptor(data, pro) || {};
                     Object.defineProperty(data, pro, {
+                        render: [function(){data.$eval();}],
                         configurable: true,
                         enumerable: descriptor.enumerable,
                         set: function (val) {
@@ -844,7 +847,6 @@
         }
 
     }
-
 
 
     ///defineProperty,实现双向绑定
